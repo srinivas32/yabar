@@ -248,6 +248,8 @@ struct ya_bar {
 	uint32_t bgcolor; //background color
 	uint16_t width;
 	uint16_t height;
+	uint16_t x;
+	uint16_t y;
 
 	xcb_window_t win;
 	uint8_t position; //top, bottom, left or right.
