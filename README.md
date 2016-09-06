@@ -287,7 +287,7 @@ Yabar has a growing set of useful blocks. You can try out the sampe config locat
 * Network bandwidth: It checks out the total transmitted and received bytes in the files `/sys/class/net/NAME/statistics/tx_bytes` and `/sys/class/net/NAME/statistics/rx_bytes` and convert them to rates. Example:
 
 		exec: "YABAR_BANDWIDTH";
-		internal-option1: "enp2s0"; #i.e. Replace NAME with your corresponding name
+		internal-option1: "default"; #Possible values are 'default' or any interface name (e.g. 'eth0', 'wlan1')
 		internal-option2: " "; #Two Strings (usually 2 font icons) to be injected before down/up values
 		interval: 2;
 
