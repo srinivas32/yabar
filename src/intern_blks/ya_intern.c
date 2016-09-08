@@ -239,6 +239,7 @@ void ya_int_bandwidth(ya_block_t * blk) {
 				}
 			}
 		}
+		fclose(routefile);
 	} else {
 		strncpy(ifname, blk->internal->option[0], 16);
 	}
