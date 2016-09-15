@@ -319,6 +319,15 @@ Yabar has a growing set of useful blocks. You can try out the sampe config locat
 		internal-suffix: "%";
 		internal-spacing: true;
 
+* Volume: It uses ALSA to display sound volume in percentage. Example:
+
+		exec: "YABAR_VOLUME";
+		interval: 1;
+		internal-option1 : "default"; # device
+		internal-option2 : "Master 0"; # Mixer index (separated by a space)
+		internal-option3 : " "; # characters to display when sound is on or off (separated by a space)
+		internal-suffix: "%";
+
 
 ## License
 
