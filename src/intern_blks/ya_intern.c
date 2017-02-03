@@ -222,13 +222,31 @@ void ya_int_bandwidth(ya_block_t * blk) {
 	char *startstr = blk->buf;
 	size_t prflen=0,suflen=0;
 	char dnstr[20], upstr[20];
+	char ifname[16];
 	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
 	if(blk->internal->spacing)
 		space = 4;
 	else
 		space = 0;
-	snprintf(rxpath, 128, "/sys/class/net/%s/statistics/rx_bytes", blk->internal->option[0]);
-	snprintf(txpath, 128, "/sys/class/net/%s/statistics/tx_bytes", blk->internal->option[0]);
+	if ( strncmp(blk->internal->option[0], "default", 7) == 0 ) {
+		FILE *routefile;
+		char line[100], *r_ifname, *r_dest;
+		routefile = fopen("/proc/net/route", "r");
+		while ( fgets(line, 100, routefile) != NULL ) {
+			r_ifname = strtok(line, "\t");
+			r_dest = strtok(NULL, "\t");
+			if ( r_ifname != NULL && r_dest != NULL) {
+				if ( strncmp(r_dest, "00000000", 8) == 0 ) {
+					strncpy(ifname, r_ifname, 16);
+				}
+			}
+		}
+		fclose(routefile);
+	} else {
+		strncpy(ifname, blk->internal->option[0], 16);
+	}
+	snprintf(rxpath, 128, "/sys/class/net/%s/statistics/rx_bytes", ifname);
+	snprintf(txpath, 128, "/sys/class/net/%s/statistics/tx_bytes", ifname);
 	if(blk->internal->option[1]) {
 		sscanf(blk->internal->option[1], "%s %s", dnstr, upstr);
 	}
