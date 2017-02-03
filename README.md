@@ -46,10 +46,10 @@ AUR: [yabar](https://aur.archlinux.org/packages/yabar/) and [yabar-git](https://
 [yabar](http://packages.ubuntu.com/search?keywords=yabar&searchon=names&suite=all&section=all) in [Yakkety Yak](http://packages.ubuntu.com/yakkety/yabar)
 
 ### From Source
-Yabar initially requires libconfig, cairo and pango. The feature `DYA_INTERNAL_EWMH` in `Makefile` additionaly xcb-ewmh (or xcb-util-wm in some distros) and the feature `-DYA_ICON` requires gdk-pixbuf2. These dependencies can be installed through your distribution's package manager:
+Yabar initially requires libconfig, cairo, pango and alsa. The feature `DYA_INTERNAL_EWMH` in `Makefile` additionaly xcb-ewmh (or xcb-util-wm in some distros) and the feature `-DYA_ICON` requires gdk-pixbuf2. These dependencies can be installed through your distribution's package manager:
 
-* Fedora: `dnf install libconfig-devel cairo-devel pango-devel gdk-pixbuf2-devel`
-* Debian / Ubuntu: `apt-get install libcairo2-dev libpango1.0-dev libconfig-dev libxcb-randr0-dev libxcb-ewmh-dev libgdk-pixbuf2.0-dev`
+* Fedora: `dnf install libconfig-devel cairo-devel pango-devel gdk-pixbuf2-devel alsa-lib-devel`
+* Debian / Ubuntu: `apt-get install libcairo2-dev libpango1.0-dev libconfig-dev libxcb-randr0-dev libxcb-ewmh-dev libgdk-pixbuf2.0-dev libasound2-dev`
 
 You can install yabar as follows:
 
@@ -318,6 +318,15 @@ Yabar has a growing set of useful blocks. You can try out the sampe config locat
 		internal-option2: "        ";
 		internal-suffix: "%";
 		internal-spacing: true;
+
+* Volume: It uses ALSA to display sound volume in percentage. Example:
+
+		exec: "YABAR_VOLUME";
+		interval: 1;
+		internal-option1 : "default"; # device
+		internal-option2 : "Master 0"; # Mixer index (separated by a space)
+		internal-option3 : " "; # characters to display when sound is on or off (separated by a space)
+		internal-suffix: "%";
 
 
 ## License
