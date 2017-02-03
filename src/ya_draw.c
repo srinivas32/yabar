@@ -136,24 +136,24 @@ void ya_create_block(ya_block_t *blk) {
  */
 void ya_create_bar(ya_bar_t * bar) {
 	bar->win = xcb_generate_id(ya.c);
-	int x=0, y=0;
+	bar->x=0, bar->y=0;
 	if ((ya.gen_flag & GEN_RANDR))
-		x = bar->hgap + bar->mon->pos.x - bar->brsize;
-	else 
-		x = bar->hgap - bar->brsize;
+		bar->x = bar->hgap + bar->mon->pos.x - bar->brsize;
+	else
+		bar->x = bar->hgap - bar->brsize;
 	switch(bar->position){
 		case YA_TOP:{
 			if ((ya.gen_flag & GEN_RANDR))
-				y = bar->vgap + bar->mon->pos.y;
+				bar->y = bar->vgap + bar->mon->pos.y;
 			else
-				y = bar->vgap;
+				bar->y = bar->vgap;
 			break;
 		} 
 		case YA_BOTTOM: {
 			if ((ya.gen_flag & GEN_RANDR))
-				y = bar->mon->pos.height - bar->vgap - bar->height - 2*bar->brsize;
+				bar->y = bar->mon->pos.height - bar->vgap - bar->height - 2*bar->brsize;
 			else
-				y = ya.scr->height_in_pixels - bar->vgap - bar->height - 2*bar->brsize;
+				bar->y = ya.scr->height_in_pixels - bar->vgap - bar->height - 2*bar->brsize;
 			break;
 		}
 	}
@@ -163,7 +163,7 @@ void ya_create_bar(ya_bar_t * bar) {
 			ya.depth,
 			bar->win,
 			ya.scr->root,
-			x,y,
+			bar->x,bar->y,
 			bar->width, bar->height,
 			bar->brsize,
 			XCB_WINDOW_CLASS_INPUT_OUTPUT,

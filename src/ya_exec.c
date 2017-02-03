@@ -434,8 +434,11 @@ void ya_execute() {
 	}
 #endif //YA_INTERNAL_EWMH
 	for(; curbar->prev_bar; curbar = curbar->prev_bar);
-	for(; curbar; curbar = curbar->next_bar)
+	for(; curbar; curbar = curbar->next_bar) {
 		xcb_map_window(ya.c, curbar->win);
+		const uint32_t coords[] = { curbar->x, curbar->y };
+		xcb_configure_window (ya.c, curbar->win, XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y, coords);
+	}
 	xcb_flush(ya.c);
 	for(curbar = ya.curbar; curbar->prev_bar; curbar = curbar->prev_bar);
 	ya.curbar = curbar;
