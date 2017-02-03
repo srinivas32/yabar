@@ -23,7 +23,7 @@ enum {
  *Setup correct properties for a bar's window.
  */
 static void ya_setup_ewmh(ya_bar_t *bar) {
-	// I really hope I understood this correctly from lemonbar code :| 
+	// I really hope I understood this correctly from lemonbar code :|
 	const char *atom_names[] = {
 		"_NET_WM_WINDOW_TYPE",
 		"_NET_WM_WINDOW_TYPE_DOCK",
@@ -49,7 +49,7 @@ static void ya_setup_ewmh(ya_bar_t *bar) {
 		free(atom_reply);
 	}
 
-	int strut[12];
+	int strut[12] = {0};
 
 	if (bar->position == YA_TOP) {
 		strut[2] = bar->height;
@@ -71,6 +71,28 @@ static void ya_setup_ewmh(ya_bar_t *bar) {
 	xcb_change_property(ya.c, XCB_PROP_MODE_REPLACE, bar->win, atom_list[NET_WM_STRUT_PARTIAL], XCB_ATOM_CARDINAL, 32, 12, strut);
 	xcb_change_property(ya.c, XCB_PROP_MODE_REPLACE, bar->win, atom_list[NET_WM_STRUT], XCB_ATOM_CARDINAL, 32, 4, strut);
 	xcb_change_property(ya.c, XCB_PROP_MODE_REPLACE, bar->win, XCB_ATOM_WM_NAME, XCB_ATOM_STRING, 8, strlen("yabar"), "yabar");
+
+#ifdef YA_BSPWM
+	// set bspwm windows to be above the bar
+	xcb_query_tree_reply_t *qtree = xcb_query_tree_reply(ya.c, xcb_query_tree(ya.c, ya.scr->root), NULL);
+	if(qtree == NULL)
+		fprintf(stderr, "Failed to query window tree");
+	xcb_window_t *wins = xcb_query_tree_children(qtree);
+
+	for(int i = 0; i < xcb_query_tree_children_length(qtree); i++) {
+		xcb_window_t found_win = wins[i];
+		// apparently class cannot be a pointer
+		xcb_icccm_get_wm_class_reply_t class;
+		if(xcb_icccm_get_wm_class_reply(ya.c, xcb_icccm_get_wm_class(ya.c, found_win), &class, NULL)) {
+			if(!strcmp("Bspwm", class.class_name) && !strcmp("root", class.instance_name)) {
+				uint32_t stack_mask[2] = {found_win, XCB_STACK_MODE_ABOVE};
+				xcb_configure_window(ya.c, bar->win, XCB_CONFIG_WINDOW_SIBLING | XCB_CONFIG_WINDOW_STACK_MODE, stack_mask);
+			}
+		}
+	}
+
+	free(qtree);
+#endif
 }
 
 /*
@@ -79,7 +101,7 @@ static void ya_setup_ewmh(ya_bar_t *bar) {
 void ya_create_block(ya_block_t *blk) {
 	ya_block_t *tmpblk;
 	if (blk->bar->curblk[blk->align]) {
-		blk->bar->curblk[blk->align]->next_blk = blk;	
+		blk->bar->curblk[blk->align]->next_blk = blk;
 		blk->prev_blk = blk->bar->curblk[blk->align];
 	}
 	switch (blk->align) {
@@ -94,7 +116,7 @@ void ya_create_block(ya_block_t *blk) {
 				for(;tmpblk->prev_blk; tmpblk = tmpblk->prev_blk);
 				tmpblk->shift = (blk->bar->width - blk->bar->occupied_width[A_CENTER])/2;
 				for(tmpblk = tmpblk->next_blk; tmpblk; tmpblk = tmpblk->next_blk) {
-					tmpblk->shift = tmpblk->prev_blk->shift + tmpblk->prev_blk->width + blk->bar->slack;	
+					tmpblk->shift = tmpblk->prev_blk->shift + tmpblk->prev_blk->width + blk->bar->slack;
 				}
 			}
 			else {
@@ -109,7 +131,7 @@ void ya_create_block(ya_block_t *blk) {
 				for(; tmpblk; tmpblk = tmpblk->prev_blk) {
 					tmpblk->shift -= (blk->width + blk->bar->slack);
 				}
-		
+
 			}
 			break;
 	}
@@ -148,7 +170,7 @@ void ya_create_bar(ya_bar_t * bar) {
 			else
 				bar->y = bar->vgap;
 			break;
-		} 
+		}
 		case YA_BOTTOM: {
 			if ((ya.gen_flag & GEN_RANDR))
 				bar->y = bar->mon->pos.height - bar->vgap - bar->height - 2*bar->brsize;
@@ -157,8 +179,8 @@ void ya_create_bar(ya_bar_t * bar) {
 			break;
 		}
 	}
-	uint32_t w_mask = XCB_CW_BACK_PIXEL | XCB_CW_BORDER_PIXEL | XCB_CW_EVENT_MASK | XCB_CW_COLORMAP;
-	uint32_t w_val[] = {bar->bgcolor, bar->brcolor, XCB_EVENT_MASK_EXPOSURE | XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT | XCB_EVENT_MASK_BUTTON_PRESS, ya.colormap};
+	uint32_t w_mask = XCB_CW_BACK_PIXEL | XCB_CW_BORDER_PIXEL | XCB_CW_OVERRIDE_REDIRECT | XCB_CW_EVENT_MASK | XCB_CW_COLORMAP;
+	uint32_t w_val[] = {bar->bgcolor, bar->brcolor, 1, XCB_EVENT_MASK_EXPOSURE | XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT | XCB_EVENT_MASK_BUTTON_PRESS, ya.colormap};
 	xcb_create_window(ya.c,
 			ya.depth,
 			bar->win,
@@ -195,7 +217,7 @@ xcb_visualtype_t * ya_get_visualtype() {
 	return NULL;
 }
 /*
- * Parse color(background, foreground, underline and overline) 
+ * Parse color(background, foreground, underline and overline)
  * from text buffer and then relocate start of designated text to strbuf member.
  */
 #ifdef YA_DYN_COL
@@ -378,7 +400,7 @@ inline void ya_inherit_bar_bgcol(ya_block_t *blk) {
 			blk->bgcolor_old = col;
 		}
 	}
-#else 
+#else
 	if(!(blk->attr & BLKA_BGCOLOR)) {
 		blk->bgcolor = blk->bar->bgcolor;
 		xcb_change_gc(ya.c, blk->gc, XCB_GC_FOREGROUND, (const uint32_t[]){blk->bgcolor});
@@ -396,7 +418,7 @@ inline void ya_draw_bar_curwin(ya_bar_t *bar) {
 		col = bar->bgcolor;
 	xcb_change_gc(ya.c, bar->gc, XCB_GC_FOREGROUND, (const uint32_t[]){col});
 	xcb_poly_fill_rectangle(ya.c, bar->win,
-			bar->gc, 1, 
+			bar->gc, 1,
 			(const xcb_rectangle_t[]) { {0,0,bar->width, bar->height} });
 }
 
@@ -440,7 +462,7 @@ void ya_resetup_bar(ya_block_t *blk) {
 	//allowed size of block width using ya_set_width_resetup()
 #ifdef YA_MUTEX
 	pthread_mutex_lock(&blk->bar->mutex);
-#endif 
+#endif
 	ya_set_width_resetup(blk);
 	ya_redraw_bar(blk->bar);
 #ifdef YA_MUTEX
@@ -456,7 +478,7 @@ void ya_resetup_bar(ya_block_t *blk) {
  */
 static inline void ya_get_text_max_width(ya_block_t *blk) {
 	cairo_surface_t *surface = cairo_xcb_surface_create(ya.c,
-			blk->pixmap, ya.visualtype, 
+			blk->pixmap, ya.visualtype,
 			blk->width, blk->bar->height);
 	cairo_t *cr = cairo_create(surface);
 	PangoContext *context = pango_cairo_create_context(cr);
@@ -485,7 +507,7 @@ static inline void ya_get_text_max_width(ya_block_t *blk) {
 	pango_layout_get_pixel_size(layout, &blk->curwidth, &ht);
 	cairo_surface_flush(surface);
 	xcb_flush(ya.c);
-	
+
 	g_object_unref(layout);
 	g_object_unref(context);
 	cairo_destroy(cr);
@@ -528,7 +550,7 @@ static inline void ya_draw_bar_var(ya_block_t *blk) {
 			break;
 	}
 	xcb_poly_fill_rectangle(ya.c, blk->bar->win,
-			blk->bar->gc, 1, 
+			blk->bar->gc, 1,
 			(const xcb_rectangle_t[]) { {start,0, end-start, blk->bar->height} });
 	//fprintf(stderr, "WIDTH DRWN=%d\n", end-start);
 }
@@ -656,7 +678,7 @@ void ya_draw_pango_text(struct ya_block *blk) {
 	if((blk->attr & BLKA_ICON)) {
 		cairo_surface_t *iconsrf = ya_draw_graphics(blk);
 		if (iconsrf) {
-			//Copy a newly created temporary surface that contains the scaled image to our surface and then 
+			//Copy a newly created temporary surface that contains the scaled image to our surface and then
 			//destroy that temporary surface and return to our normal cairo scale.
 			cairo_scale(cr, blk->img->scale_w, blk->img->scale_h);
 			cairo_set_source_surface(cr, iconsrf,
@@ -672,8 +694,8 @@ void ya_draw_pango_text(struct ya_block *blk) {
 	PangoLayout *layout = pango_layout_new(context);
 	pango_layout_set_font_description(layout, blk->bar->desc);
 
-	cairo_set_source_rgba(cr, 
-			GET_RED(blk->fgcolor), 
+	cairo_set_source_rgba(cr,
+			GET_RED(blk->fgcolor),
 			GET_BLUE(blk->fgcolor),
 			GET_GREEN(blk->fgcolor),
 			GET_ALPHA(blk->fgcolor));
@@ -713,8 +735,8 @@ void ya_draw_pango_text(struct ya_block *blk) {
 
 	//Draw overline if defined
 	if(blk->attr & BLKA_OVERLINE) {
-		cairo_set_source_rgba(cr, 
-			GET_RED(blk->olcolor), 
+		cairo_set_source_rgba(cr,
+			GET_RED(blk->olcolor),
 			GET_BLUE(blk->olcolor),
 			GET_GREEN(blk->olcolor),
 			GET_ALPHA(blk->olcolor));
@@ -723,8 +745,8 @@ void ya_draw_pango_text(struct ya_block *blk) {
 	}
 	//Draw underline if defined
 	if(blk->attr & BLKA_UNDERLINE) {
-		cairo_set_source_rgba(cr, 
-			GET_RED(blk->ulcolor), 
+		cairo_set_source_rgba(cr,
+			GET_RED(blk->ulcolor),
 			GET_BLUE(blk->ulcolor),
 			GET_GREEN(blk->ulcolor),
 			GET_ALPHA(blk->ulcolor));
@@ -738,7 +760,7 @@ void ya_draw_pango_text(struct ya_block *blk) {
 #ifdef YA_MUTEX
 	pthread_mutex_unlock(&blk->bar->mutex);
 #endif
-	
+
 	g_object_unref(layout);
 	g_object_unref(context);
 	cairo_destroy(cr);

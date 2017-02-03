@@ -8,7 +8,7 @@
 
 #include "yabar.h"
 
-char conf_file[CFILELEN]; 
+char conf_file[CFILELEN];
 static const char * const yashell = "/bin/sh";
 
 #ifdef YA_INTERNAL_EWMH
@@ -41,7 +41,7 @@ inline static void ya_copy_buf_from_index(ya_block_t *blk, uint32_t cur_desktop)
 }
 
 /*
- * similar to any ya_exec function in this file, this function is used to obtain text buffer and 
+ * similar to any ya_exec function in this file, this function is used to obtain text buffer and
  * draw it. However, this function is called upon X events.
  */
 inline static void ya_exec_intern_ewmh_blk(ya_block_t *blk) {
@@ -104,7 +104,7 @@ static void ya_exec_redir_once(ya_block_t *blk) {
 		execl(yashell, yashell, "-c", blk->cmd, (char *) NULL);
 		_exit(EXIT_SUCCESS);
 	}
-	
+
 	ssize_t read_ret = read(opipe[0], blk->buf, blk->bufsize);
 	if (read_ret < 0) {
 		fprintf(stderr, "Error with block %s: %s\n", blk->name, strerror(errno));
@@ -308,7 +308,7 @@ static void ya_process_path(char *cpath) {
 static int ya_init_randr() {
 	xcb_randr_get_screen_resources_current_reply_t *res_reply;
 	res_reply = xcb_randr_get_screen_resources_current_reply(ya.c,
-			xcb_randr_get_screen_resources_current(ya.c, ya.scr->root), NULL); 
+			xcb_randr_get_screen_resources_current(ya.c, ya.scr->root), NULL);
 	if (!res_reply) {
 		return -1; //just report error
 	}
@@ -332,7 +332,7 @@ static int ya_init_randr() {
 		if(!crtc_reply)
 			continue;
 		tmpmon = calloc(1, sizeof(ya_monitor_t));
-		tmpmon->pos = (xcb_rectangle_t){crtc_reply->x, 
+		tmpmon->pos = (xcb_rectangle_t){crtc_reply->x,
 			crtc_reply->y, crtc_reply->width, crtc_reply->height};
 		tname = (char *)xcb_randr_get_output_info_name(op_reply);
 		tname_len = xcb_randr_get_output_info_name_length(op_reply);
@@ -445,7 +445,7 @@ void ya_execute() {
 	for(; curbar; curbar = curbar->next_bar) {
 		for(int align =0; align < 3; align++){
 			if ((curblk = curbar->curblk[align])) {
-				for(; curblk->prev_blk; curblk = curblk->prev_blk);	
+				for(; curblk->prev_blk; curblk = curblk->prev_blk);
 				curbar->curblk[align] = curblk;
 				for(;curblk; curblk = curblk->next_blk) {
 #ifdef YA_INTERNAL_EWMH
@@ -454,7 +454,7 @@ void ya_execute() {
 						pthread_create(&curblk->thread, NULL, ya_exec, (void *) curblk);
 #else
 					pthread_create(&curblk->thread, NULL, ya_exec, (void *) curblk);
-#endif 
+#endif
 				}
 			}
 		}
@@ -506,7 +506,7 @@ void ya_handle_button( xcb_button_press_event_t *eb) {
 						}
 					}
 				}
-			}	
+			}
 			//If block button not found or not defined, execute button for bar(if defined).
 			//We reach this path only if function has not yet returned because no blk has been found.
 			if(curbar->button_cmd[eb->detail-1]) {

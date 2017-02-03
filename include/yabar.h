@@ -31,6 +31,7 @@
 
 #include <xcb/randr.h>
 #include <xcb/xcb_ewmh.h>
+#include <xcb/xcb_icccm.h>
 
 #include <gdk-pixbuf/gdk-pixbuf.h>
 
@@ -281,7 +282,7 @@ struct ya_bar {
 	uint8_t attr; //bar attributes
 
 	ya_monitor_t *mon;
-	
+
 #ifdef YA_MUTEX
 	pthread_mutex_t mutex;
 #endif //YA_MUTEX

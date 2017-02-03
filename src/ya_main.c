@@ -30,6 +30,12 @@ int main (int argc, char * argv[]) {
 				ya_handle_button((xcb_button_press_event_t *) ev);
 				break;
 			}
+			case XCB_EXPOSE: {
+				if (((xcb_expose_event_t *) ev)->count != 0)
+					break;
+				ya_redraw_bar(ya.curbar);
+				break;
+			}
 		}
 		free(ev);
 	}
