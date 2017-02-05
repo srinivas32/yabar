@@ -99,13 +99,11 @@ inline static void ya_exec_intern_ewmh_blk(ya_block_t *blk) {
 				fprintf(stderr, "Error getting number of desktops\n");
 				break;
 			}
-			//printf("Number of desktops: %d\n", num_desktops);
 			//make an array with size _NET_NUMBER_OF_DESKTOPS
 			//this only stores the state, not the final buffer
 			// e = empty, o = occupied, f = focused, u = urgent
 			char desktops[num_desktops];
 			memset(desktops, 'e', num_desktops);
-			//printf("%s %d %d\n", desktops, strlen(desktops), num_desktops);
 
 			//get all clients
 			xcb_ewmh_get_windows_reply_t clients;
@@ -116,41 +114,30 @@ inline static void ya_exec_intern_ewmh_blk(ya_block_t *blk) {
 			}
 			//find all occupied desktops
 			for(int i = 0; i < clients.windows_len; i++) {
+				xcb_window_t id = clients.windows[i];
+
+				uint32_t mask[] = {XCB_EVENT_MASK_PROPERTY_CHANGE};
+				xcb_change_window_attributes(ya.c, id, XCB_CW_EVENT_MASK, mask);
+
 				xcb_get_property_cookie_t c_dktp;//, c_ste;
 				uint32_t desktop;
-				//xcb_ewmh_get_atoms_reply_t *state = NULL;
-				xcb_window_t id = clients.windows[i];
 				c_dktp = xcb_ewmh_get_wm_desktop(ya.ewmh, id);
 				xcb_ewmh_get_wm_desktop_reply(ya.ewmh, c_dktp, &desktop, NULL);
 				//printf("Occupied desktop: %d\n", desktop);
 				desktops[desktop] = 'o';
 
-				//check if urgent
-				//c_ste = xcb_ewmh_get_wm_state(ya.ewmh, id);
-				//if(xcb_ewmh_get_wm_state_reply(ya.ewmh, c_ste, state, NULL) != 1) {
-				//	//window has no state, ignore
-				//	//fprintf(stderr, "Error getting state of window %x\n", id);
-				//}
-				//else {
-				//	for(int j = 0; j < state->atoms_len; j++) {
-				//		if(state->atoms[j] == ya.ewmh->_NET_WM_STATE_DEMANDS_ATTENTION) {
-				//			//printf("Urgent desktop: %d\n", desktop);
-				//			desktops[desktop] = 'u';
-				//		}
-				//	}
-				//}
-
-				//xcb_icccm_wm_hints_t *hints = NULL;
-				//xcb_get_property_cookie_t c_hint = xcb_icccm_get_wm_hints(ya.c, id);
-				//if(xcb_icccm_get_wm_hints_reply(ya.c, c_hint, hints, NULL) != 1) {
-				//	fprintf(stderr, "Error getting WM hints\n");
-				//}
-				//else {
-				//	if(xcb_icccm_wm_hints_get_urgency(hints) == (1L << 8))
-				//		desktops[desktop] = 'u';
-				//}
-				//free(hints);
+				xcb_icccm_wm_hints_t hints;
+				xcb_get_property_cookie_t c_hint = xcb_icccm_get_wm_hints(ya.c, id);
+				if(xcb_icccm_get_wm_hints_reply(ya.c, c_hint, &hints, NULL) != 1) {
+					//no hints defined, ignore
+				}
+				else {
+					if(xcb_icccm_wm_hints_get_urgency(&hints) == (1L << 8)) {
+						desktops[desktop] = 'u';
+					}
+				}
 			}
+			xcb_ewmh_get_windows_reply_wipe(&clients);
 			c_cur = xcb_ewmh_get_current_desktop(ya.ewmh, 0);
 			xcb_ewmh_get_current_desktop_reply(ya.ewmh, c_cur, &cur_desktop, NULL);
 			//printf("Current desktop: %d\n", cur_desktop);
@@ -171,15 +158,15 @@ inline static void ya_exec_intern_ewmh_blk(ya_block_t *blk) {
 				char *name_arr[num_strings];
 				int j = 0;
 				name_arr[j] = names.strings;
-				//printf("%s\n", names.strings);
 				for(int i = 1; i < num_strings; i++) {
 					if(names.strings[i] == '\0')
 						name_arr[++j] = &names.strings[++i];
 				}
-				//if(num_strings < num_desktops)
-					// desktops with high numbers unnamed
+				//if num_strings < num_desktops, desktops with high numbers unnamed
 				for(int i = 0; i < num_desktops; i++) {
 					//printf("%s\n", name_arr[i]);
+					//TODO: use markup to create underline, overline, etc.
+					//set blk->attr |= BLKA_MARKUP_PANGO?
 					switch(desktops[i]) {
 						//case 'e':
 						//	strcat(blk->buf, icons[0]);
@@ -730,6 +717,9 @@ void ya_handle_prop_notify(xcb_property_notify_event_t *ep) {
 	}
 	else if ((ep->atom == ya.ewmh->_NET_WM_NAME) || (ep->atom == ya.ewmh->_NET_WM_VISIBLE_NAME)) {
 		//Same window, but title changed. Therefore don't return.
+	}
+	else if (ep->atom == ya.hints) {
+		//WM_HINTS changed, meaning that a window is now urgent
 	}
 	else {
 		return;

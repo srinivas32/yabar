@@ -394,6 +394,7 @@ inline static void ya_setup_ewmh_intern_blk(ya_block_t *blk) {
 	ya_ewmh_blk *cur=NULL;
 	switch(blk->internal->index) {
 		case YA_INT_WORKSPACES:
+			blk->attr |= BLKA_MARKUP_PANGO;
 		case YA_INT_WORKSPACE:
 		case YA_INT_TITLE:
 			blk->attr |= BLKA_INTERN_X_EV;

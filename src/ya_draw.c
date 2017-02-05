@@ -17,6 +17,7 @@ enum {
 	NET_WM_STATE,
 	NET_WM_STATE_STICKY,
 	NET_WM_STATE_ABOVE,
+	WM_HINTS,
 };
 
 /*
@@ -33,6 +34,7 @@ static void ya_setup_ewmh(ya_bar_t *bar) {
 		"_NET_WM_STATE",
 		"_NET_WM_STATE_STICKY",
 		"_NET_WM_STATE_ABOVE",
+		"WM_HINTS",
 	};
 	const int atoms = sizeof(atom_names)/sizeof(char *);
 	xcb_intern_atom_cookie_t atom_cookie[atoms];
@@ -65,6 +67,7 @@ static void ya_setup_ewmh(ya_bar_t *bar) {
 	//TODO right and left bars if implemented.
 	}
 
+	ya.hints = atom_list[WM_HINTS];
 	xcb_change_property(ya.c, XCB_PROP_MODE_REPLACE, bar->win, atom_list[NET_WM_WINDOW_TYPE], XCB_ATOM_ATOM, 32, 1, &atom_list[NET_WM_WINDOW_TYPE_DOCK]);
 	xcb_change_property(ya.c, XCB_PROP_MODE_APPEND,  bar->win, atom_list[NET_WM_STATE], XCB_ATOM_ATOM, 32, 2, &atom_list[NET_WM_STATE_STICKY]);
 	xcb_change_property(ya.c, XCB_PROP_MODE_REPLACE, bar->win, atom_list[NET_WM_DESKTOP], XCB_ATOM_CARDINAL, 32, 1, (const uint32_t []){ -1 } );
