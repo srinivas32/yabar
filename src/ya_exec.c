@@ -84,6 +84,96 @@ inline static void ya_exec_intern_ewmh_blk(ya_block_t *blk) {
 //#endif
 			break;
 		}
+		case YA_INT_WORKSPACES: {
+			char icons[4][20];
+			// 0 = empty, 1 = occupied, 2 = focused, 3 = urgent
+			if(blk->internal->option[0]) {
+				sscanf(blk->internal->option[0], "%s %s %s %s", icons[0], icons[1], icons[2], icons[3]);
+			}
+
+			uint32_t num_desktops = 0, cur_desktop;
+			xcb_get_property_cookie_t c_scr, c_cli, c_cur;
+			//TODO: change xcb_connect to store screen number
+			//screen number is derived from xcb connection
+			c_scr = xcb_ewmh_get_number_of_desktops(ya.ewmh, 0);
+			if(xcb_ewmh_get_number_of_desktops_reply(ya.ewmh, c_scr, &num_desktops, NULL) != 1) {
+				fprintf(stderr, "Error getting number of desktops\n");
+				break;
+			}
+			//printf("Number of desktops: %d\n", num_desktops);
+			//make an array with size _NET_NUMBER_OF_DESKTOPS
+			//this only stores the state, not the final buffer
+			// e = empty, o = occupied, f = focused, u = urgent
+			char desktops[num_desktops];
+			memset(desktops, 'e', num_desktops);
+			//printf("%s %d %d\n", desktops, strlen(desktops), num_desktops);
+
+			//get all clients
+			xcb_ewmh_get_windows_reply_t clients;
+			c_cli = xcb_ewmh_get_client_list(ya.ewmh, 0);
+			if(xcb_ewmh_get_client_list_reply(ya.ewmh, c_cli, &clients, NULL) != 1) {
+				fprintf(stderr, "Error getting client list\n");
+				break;
+			}
+			//find all occupied desktops
+			for(int i = 0; i < clients.windows_len; i++) {
+				xcb_get_property_cookie_t c_dktp, c_ste;
+				uint32_t desktop;
+				xcb_ewmh_get_atoms_reply_t *state = NULL;
+				xcb_window_t id = clients.windows[i];
+				c_dktp = xcb_ewmh_get_wm_desktop(ya.ewmh, id);
+				xcb_ewmh_get_wm_desktop_reply(ya.ewmh, c_dktp, &desktop, NULL);
+				//printf("Occupied desktop: %d\n", desktop);
+				desktops[desktop] = 'o';
+
+				//check if urgent
+				c_ste = xcb_ewmh_get_wm_state(ya.ewmh, id);
+				if(xcb_ewmh_get_wm_state_reply(ya.ewmh, c_ste, state, NULL) != 1) {
+					//window has no state, ignore
+					//fprintf(stderr, "Error getting state of window %x\n", id);
+				}
+				else {
+					for(int j = 0; j < state->atoms_len; j++) {
+						if(state->atoms[j] == ya.ewmh->_NET_WM_STATE_DEMANDS_ATTENTION) {
+							//printf("Urgent desktop: %d\n", desktop);
+							desktops[desktop] = 'u';
+						}
+					}
+				}
+			}
+			c_cur = xcb_ewmh_get_current_desktop(ya.ewmh, 0);
+			xcb_ewmh_get_current_desktop_reply(ya.ewmh, c_cur, &cur_desktop, NULL);
+			//printf("Current desktop: %d\n", cur_desktop);
+			desktops[cur_desktop] = 'f';
+			//clear the buffer
+			memset(blk->buf, 0, strlen(blk->buf));
+			for(int i = 0; i < num_desktops; i++) {
+				switch(desktops[i]) {
+					case 'e':
+						strcat(blk->buf, icons[0]);
+						break;
+					case 'o':
+						strcat(blk->buf, icons[1]);
+						break;
+					case 'f':
+						strcat(blk->buf, icons[2]);
+						break;
+					case 'u':
+						strcat(blk->buf, icons[3]);
+						break;
+				}
+				if(i < num_desktops - 1)
+					strcat(blk->buf, " ");
+			}
+
+			//printf("%s\n", desktops);
+#ifdef YA_VAR_WIDTH
+			DRAW_TEXT(blk);
+#else
+			ya_draw_pango_text(blk);
+#endif //YA_VAR_WIDTH
+			break;
+		}
 	}
 
 }

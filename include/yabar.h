@@ -119,7 +119,7 @@ enum {
 
 
 #ifdef YA_INTERNAL_EWMH
-#define YA_INTERNAL_LEN 16
+#define YA_INTERNAL_LEN 17
 #else
 #define YA_INTERNAL_LEN 14
 #endif
@@ -139,7 +139,8 @@ enum {
 	YA_INT_WIFI,
 	YA_INT_DISKSPACE,
 	YA_INT_TITLE,
-	YA_INT_WORKSPACE
+	YA_INT_WORKSPACE,
+	YA_INT_WORKSPACES
 };
 
 #define NOT_INHERIT_BAR(bar) (((bar)->attr & BARA_INHERIT)==0)
