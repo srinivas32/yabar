@@ -90,7 +90,6 @@ inline static void ya_exec_intern_ewmh_blk(ya_block_t *blk) {
 			if(blk->internal->option[0]) {
 				sscanf(blk->internal->option[0], "%s %s %s %s", icons[0], icons[1], icons[2], icons[3]);
 			}
-
 			uint32_t num_desktops = 0, cur_desktop;
 			xcb_get_property_cookie_t c_scr, c_cli, c_cur;
 			//TODO: change xcb_connect to store screen number
@@ -117,9 +116,9 @@ inline static void ya_exec_intern_ewmh_blk(ya_block_t *blk) {
 			}
 			//find all occupied desktops
 			for(int i = 0; i < clients.windows_len; i++) {
-				xcb_get_property_cookie_t c_dktp, c_ste;
+				xcb_get_property_cookie_t c_dktp;//, c_ste;
 				uint32_t desktop;
-				xcb_ewmh_get_atoms_reply_t *state = NULL;
+				//xcb_ewmh_get_atoms_reply_t *state = NULL;
 				xcb_window_t id = clients.windows[i];
 				c_dktp = xcb_ewmh_get_wm_desktop(ya.ewmh, id);
 				xcb_ewmh_get_wm_desktop_reply(ya.ewmh, c_dktp, &desktop, NULL);
@@ -127,19 +126,30 @@ inline static void ya_exec_intern_ewmh_blk(ya_block_t *blk) {
 				desktops[desktop] = 'o';
 
 				//check if urgent
-				c_ste = xcb_ewmh_get_wm_state(ya.ewmh, id);
-				if(xcb_ewmh_get_wm_state_reply(ya.ewmh, c_ste, state, NULL) != 1) {
-					//window has no state, ignore
-					//fprintf(stderr, "Error getting state of window %x\n", id);
-				}
-				else {
-					for(int j = 0; j < state->atoms_len; j++) {
-						if(state->atoms[j] == ya.ewmh->_NET_WM_STATE_DEMANDS_ATTENTION) {
-							//printf("Urgent desktop: %d\n", desktop);
-							desktops[desktop] = 'u';
-						}
-					}
-				}
+				//c_ste = xcb_ewmh_get_wm_state(ya.ewmh, id);
+				//if(xcb_ewmh_get_wm_state_reply(ya.ewmh, c_ste, state, NULL) != 1) {
+				//	//window has no state, ignore
+				//	//fprintf(stderr, "Error getting state of window %x\n", id);
+				//}
+				//else {
+				//	for(int j = 0; j < state->atoms_len; j++) {
+				//		if(state->atoms[j] == ya.ewmh->_NET_WM_STATE_DEMANDS_ATTENTION) {
+				//			//printf("Urgent desktop: %d\n", desktop);
+				//			desktops[desktop] = 'u';
+				//		}
+				//	}
+				//}
+
+				//xcb_icccm_wm_hints_t *hints = NULL;
+				//xcb_get_property_cookie_t c_hint = xcb_icccm_get_wm_hints(ya.c, id);
+				//if(xcb_icccm_get_wm_hints_reply(ya.c, c_hint, hints, NULL) != 1) {
+				//	fprintf(stderr, "Error getting WM hints\n");
+				//}
+				//else {
+				//	if(xcb_icccm_wm_hints_get_urgency(hints) == (1L << 8))
+				//		desktops[desktop] = 'u';
+				//}
+				//free(hints);
 			}
 			c_cur = xcb_ewmh_get_current_desktop(ya.ewmh, 0);
 			xcb_ewmh_get_current_desktop_reply(ya.ewmh, c_cur, &cur_desktop, NULL);
@@ -147,23 +157,72 @@ inline static void ya_exec_intern_ewmh_blk(ya_block_t *blk) {
 			desktops[cur_desktop] = 'f';
 			//clear the buffer
 			memset(blk->buf, 0, strlen(blk->buf));
-			for(int i = 0; i < num_desktops; i++) {
-				switch(desktops[i]) {
-					case 'e':
-						strcat(blk->buf, icons[0]);
-						break;
-					case 'o':
-						strcat(blk->buf, icons[1]);
-						break;
-					case 'f':
-						strcat(blk->buf, icons[2]);
-						break;
-					case 'u':
-						strcat(blk->buf, icons[3]);
-						break;
+
+			//show names instead of indicators
+			if(blk->internal->option[1] && !strcmp(blk->internal->option[1], "name")) {
+				xcb_ewmh_get_utf8_strings_reply_t names;
+				uint32_t num_strings;
+				xcb_get_property_cookie_t c_names = xcb_ewmh_get_desktop_names(ya.ewmh, 0);
+				if(xcb_ewmh_get_desktop_names_reply(ya.ewmh, c_names, &names, NULL) != 1) {
+					fprintf(stderr, "Error getting desktop names\n");
+					break;
 				}
-				if(i < num_desktops - 1)
-					strcat(blk->buf, " ");
+				num_strings = names.strings_len;
+				char *name_arr[num_strings];
+				int j = 0;
+				name_arr[j] = names.strings;
+				//printf("%s\n", names.strings);
+				for(int i = 1; i < num_strings; i++) {
+					if(names.strings[i] == '\0')
+						name_arr[++j] = &names.strings[++i];
+				}
+				//if(num_strings < num_desktops)
+					// desktops with high numbers unnamed
+				for(int i = 0; i < num_desktops; i++) {
+					//printf("%s\n", name_arr[i]);
+					switch(desktops[i]) {
+						//case 'e':
+						//	strcat(blk->buf, icons[0]);
+						//	break;
+						case 'o':
+							if(i > 0)
+								strcat(blk->buf, " ");
+							strcat(blk->buf, name_arr[i]);
+							break;
+						case 'f':
+							if(i > 0)
+								strcat(blk->buf, " ");
+							strcat(blk->buf, "*");
+							strcat(blk->buf, name_arr[i]);
+							strcat(blk->buf, "*");
+							break;
+						//case 'u':
+						//	strcat(blk->buf, icons[3]);
+						//	break;
+					}
+				}
+				xcb_ewmh_get_utf8_strings_reply_wipe(&names);
+				//printf("%s\n", blk->buf);
+			}
+			else {
+				for(int i = 0; i < num_desktops; i++) {
+					switch(desktops[i]) {
+						case 'e':
+							strcat(blk->buf, icons[0]);
+							break;
+						case 'o':
+							strcat(blk->buf, icons[1]);
+							break;
+						case 'f':
+							strcat(blk->buf, icons[2]);
+							break;
+						case 'u':
+							strcat(blk->buf, icons[3]);
+							break;
+					}
+					if(i < num_desktops - 1)
+						strcat(blk->buf, " ");
+				}
 			}
 
 			//printf("%s\n", desktops);
