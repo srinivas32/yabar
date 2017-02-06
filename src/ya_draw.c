@@ -726,6 +726,40 @@ void ya_draw_pango_text(struct ya_block *blk) {
 	else
 		pango_layout_set_markup(layout, blk->buf, strlen(blk->buf));
 #endif
+	char *mono = "";
+	const char *font_fam = pango_font_description_get_family(blk->bar->desc);
+	PangoFontFamily **families;
+	int n_families;
+	pango_context_list_families(context, &families, &n_families);
+	//check if monospace font family is used; if so, use that font for spaces
+	for(int i = 0; i < n_families; i++) {
+		const char * name = pango_font_family_get_name(families[i]);
+		if(strstr(font_fam, name) != NULL && pango_font_family_is_monospace(families[i])) {
+			mono = strdup(name);
+			break;
+		}
+	}
+	// create a list of fallback attributes so spaces between font glyphs aren't tofued
+	PangoAttrList *list = pango_attr_list_new();
+	for(int i = 0; i < strlen(blk->buf); i++) {
+		if((blk->buf)[i] == ' ') {
+			int j;
+			PangoAttribute *fb = pango_attr_fallback_new(TRUE), *ms = pango_attr_family_new((const char *) mono);
+			pango_attribute_init(fb, fb->klass);
+			pango_attribute_init(ms, ms->klass);
+			fb->start_index = i;
+			ms->start_index = i;
+			for(j = 1; (blk->buf)[i+j] == ' '; j++);
+			fb->end_index = i + j;
+			ms->end_index = i + j;
+			pango_attr_list_insert(list, fb);
+			pango_attr_list_insert(list, ms);
+			i += j - 1;
+		}
+	}
+	pango_layout_set_attributes(layout, list);
+	g_free(families);
+	//printf("Unknown glyph count: %d\n", pango_layout_get_unknown_glyphs_count(layout));
 	//fprintf(stderr, "020=%s\n", blk->name);
 	pango_layout_set_alignment(layout, blk->justify);
 	cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
