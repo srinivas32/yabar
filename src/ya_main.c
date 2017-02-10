@@ -33,7 +33,10 @@ int main (int argc, char * argv[]) {
 			case XCB_EXPOSE: {
 				if (((xcb_expose_event_t *) ev)->count != 0)
 					break;
-				ya_redraw_bar(ya.curbar);
+				ya_bar_t *curbar = ya.curbar;
+				for(;curbar; curbar = curbar->next_bar) {
+					ya_redraw_bar(curbar);
+				}
 				break;
 			}
 		}
