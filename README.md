@@ -228,11 +228,13 @@ The spaces are just skipped automatically. Keep in mind that You can always dyna
 
 ### Environment variables
 
-Yabar sets a handful of environment variables before executing your commands/scripts that are defined in the `command-button{1-5}` entry. Such env variables can be useful when drawing your window on the corresponding button press. Current env variables are:
+Yabar sets a handful of environment variables before executing your commands/scripts that are defined in the `command-button{1-5}` entry. Such env variables can be useful when drawing your window on the corresponding button press or determining where the click occured. Current env variables are:
 
 		${YABAR_BLOCK_X} #The beginning x axis for the block
 		${YABAR_BLOCK_Y} #It returns just the bottom y value of the block in case of topbar or just the top y value of the block in case of bottombar
 		${YABAR_BLOCK_WIDTH} #Block width
+		${YABAR_CLICK_X} #The x coordinate of the click starting in the top-left corner of the block
+		${YABAR_CLICK_Y} #The y coordinate of the click starting in the top-left corner of the block
 
 ## Internal blocks
 

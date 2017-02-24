@@ -468,7 +468,7 @@ static inline void ya_exec_button(ya_block_t * blk, xcb_button_press_event_t *eb
 	if (fork() == 0) {
 #ifdef YA_ENV_VARS
 		//Setup environment variables.
-		char blkx[6], blky[6], blkw[6];
+		char blkx[6], blky[6], blkw[6], clkx[6], clky[6];
 		snprintf(blkx, 6, "%d", eb->root_x - eb->event_x + blk->shift);
 		if (blk->bar->position == YA_TOP)
 			snprintf(blky, 6, "%d", blk->bar->height + blk->bar->vgap);
@@ -478,9 +478,17 @@ static inline void ya_exec_button(ya_block_t * blk, xcb_button_press_event_t *eb
 			//TODO for right and left
 		}
 		snprintf(blkw, 6, "%d", blk->width);
+		if ((blk->bar->position == YA_TOP) || (blk->bar->position == YA_BOTTOM)) {
+			snprintf(clkx, 6, "%d", eb->event_x - blk->shift);
+			snprintf(clky, 6, "%d", eb->event_y);
+		} else {
+			//TODO for right and left
+		}
 		setenv("YABAR_BLOCK_X", blkx, 1);
 		setenv("YABAR_BLOCK_Y", blky, 1);
 		setenv("YABAR_BLOCK_WIDTH", blkw, 1);
+		setenv("YABAR_CLICK_X", clkx, 1);
+		setenv("YABAR_CLICK_Y", clky, 1);
 #endif
 		execl(yashell, yashell, "-c", blk->button_cmd[eb->detail-1], (char *) NULL);
 		_exit(EXIT_SUCCESS);
