@@ -577,8 +577,9 @@ ya_volume_error:
 
 /* -- Disk usage block -- */
 static const char const symbols[5] = {0, 'K', 'M', 'G', 'T'};
-/* bytes to human-readable str: convert an amount of bytes to a string with the
-   corresponding suffix. e.g. "123456789" -> "117.7M" (bytes) */
+//bytes to human-readable str: convert an amount of bytes to a string with the
+//corresponding suffix. e.g. "123456789" -> "117.7M" (bytes)
+
 static int btohstr(char *str, uint64_t bytes)
 {
 	double size = bytes;
@@ -600,8 +601,9 @@ void ya_int_diskspace(ya_block_t *blk) {
 	int8_t mntpntcount = -1;
 	FILE *mntentfile = setmntent("/etc/mtab", "r");;
 	struct mntent *m;
-	/* read /etc/mtab to get all mountpoints where the underlying device or
-	   volume group matches the internal-option1 */
+	uint8_t space = blk->internal->spacing ? 7 : 0;
+	//read /etc/mtab to get all mountpoints where the underlying device or
+	//volume group matches the internal-option1
 	while ( (m = getmntent(mntentfile)) != NULL ) {
 		if (strncmp(m->mnt_fsname, blk->internal->option[0],
 					strlen(blk->internal->option[0])) == 0) {
@@ -627,7 +629,7 @@ void ya_int_diskspace(ya_block_t *blk) {
 	while (1) {
 		free = 0;
 		total = 0;
-        /* get and sum used / total space of every mountpoints */
+		//get and sum used / total space of every mountpoints
 		for( int i = 0; i <= mntpntcount; i++) {
 			if ( statvfs(mountpoints[i], &stat) != -1 ) {
 				free += (uint64_t)(stat.f_bfree * stat.f_bsize);
@@ -635,10 +637,10 @@ void ya_int_diskspace(ya_block_t *blk) {
 			}
 		}
 		btohstr(sizebuf, total - free);
-		sprintf(startstr, sizebuf);
+		sprintf(startstr, "%*s", space, sizebuf);
 		strcat(startstr, "/");
 		btohstr(sizebuf, total);
-		strcat(startstr, sizebuf);
+		sprintf(startstr+strlen(startstr), "%*s", space, sizebuf);
 		if(suflen)
 			strcat(blk->buf, blk->internal->suffix);
 		ya_draw_pango_text(blk);
