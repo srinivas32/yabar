@@ -52,14 +52,14 @@ static void ya_setup_ewmh(ya_bar_t *bar) {
 	int strut[12] = {0};
 
 	if (bar->position == YA_TOP) {
-		strut[2] = bar->height;
-		strut[8] = bar->hgap;
-		strut[9] = bar->hgap + bar->width - 1;
+		strut[2] = bar->vgap + bar->height;
+		strut[8] = bar->x;
+		strut[9] = bar->x + bar->width - 1;
 	}
 	else if (bar->position == YA_BOTTOM) {
-		strut[3] = bar->height;
-		strut[10] = bar->hgap;
-		strut[11] = bar->hgap + bar->width - 1;
+		strut[3] = bar->vgap + bar->height;
+		strut[10] = bar->x;
+		strut[11] = bar->x + bar->width - 1;
 	}
 	else {
 	//TODO right and left bars if implemented.
