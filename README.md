@@ -324,8 +324,8 @@ Yabar has a growing set of useful blocks. You can try out the sampe config locat
 
 		exec: "YABAR_VOLUME";
 		interval: 1;
-		internal-option1 : "default"; # device
-		internal-option2 : "Master 0"; # Mixer index (separated by a space)
+		internal-option1 : "default Master 0"; # device, mixer, index (separated by a space)
+		internal-option2 : "mapped"; # if set to 'mapped', will use logarithmic scale (like `amixer -M` and `alsamixer`)
 		internal-option3 : " "; # characters to display when sound is on or off (separated by a space)
 		internal-suffix: "%";
 

@@ -516,7 +516,11 @@ void ya_int_battery(ya_block_t *blk) {
 }
 
 #include <alsa/asoundlib.h>
+#include <math.h>
+#define MAX_LINEAR_DB_SCALE 24
+#define exp10(x) (exp((x) * log(10)))
 void ya_int_volume(ya_block_t *blk) {
+	bool mapped = false;
 	char *startstr = blk->buf;
 	size_t prflen = 0, suflen = 0;
 	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
@@ -528,15 +532,12 @@ void ya_int_volume(ya_block_t *blk) {
 	snd_mixer_selem_id_t *sid;
 	uint8_t space = blk->internal->spacing ? 3 : 0;
 	if( blk->internal->option[0] ) {
-		sscanf(blk->internal->option[0], "%s", device);
+		sscanf(blk->internal->option[0], "%s %s %d", device, mixer_name, &mixer_index);
 	} else {
 		ya_block_error(blk, "internal-option1 (device) is mandatory");
 	}
-	if( blk->internal->option[1] ) {
-		sscanf(blk->internal->option[1], "%s %d", mixer_name, &mixer_index);
-	} else {
-		ya_block_error(blk, "internal-option2 (mixer) is mandatory");
-	}
+	if( strcmp(blk->internal->option[1], "mapped") == 0 )
+		mapped = true;
 	if( blk->internal->option[2] ) {
 		sscanf(blk->internal->option[2], "%s %s", on, off);
 	}
@@ -563,16 +564,34 @@ void ya_int_volume(ya_block_t *blk) {
 		ya_block_error(blk, "Unable to find index %i of mixer %s",
 				snd_mixer_selem_id_get_index(sid), snd_mixer_selem_id_get_name(sid));
 	}
-	snd_mixer_selem_get_playback_volume_range(elem, &range_min, &range_max);
+	mapped ? snd_mixer_selem_get_playback_dB_range(elem, &range_min, &range_max) :
+		snd_mixer_selem_get_playback_volume_range(elem, &range_min, &range_max);
 	while (1) {
 		snd_mixer_handle_events(mixer_handle);
-		snd_mixer_selem_get_playback_volume(elem, 0, &pb_volume);
-		if ( range_max != 100 ) {
-			float avg_volf = ( (float) pb_volume / range_max ) * 100;
-			avg_vol = (int) avg_volf;
-			avg_vol = (avg_volf - avg_vol < 0.5 ? avg_vol : (avg_vol + 1));
-		} else {
-			avg_vol = (int) pb_volume;
+		if (mapped) {
+			if (range_max - range_min <= MAX_LINEAR_DB_SCALE * 100) {
+				avg_vol = (pb_volume - range_min) / (double)(range_max - range_min);
+			}
+			else {
+			//map to logarithmic scale using alsa-util's get_normalized_volume from volume_mapping.c
+				snd_mixer_selem_get_playback_dB(elem, 0, &pb_volume);
+				double norm = exp10((pb_volume - range_max) / 6000.0);
+				if (range_min != SND_CTL_TLV_DB_GAIN_MUTE) {
+					double min_norm = exp10((range_min - range_max) / 6000.0);
+					norm = (norm - min_norm) / (1 - min_norm);
+				}
+				avg_vol = (int) rint(norm * 100);
+			}
+		}
+		else {
+			snd_mixer_selem_get_playback_volume(elem, 0, &pb_volume);
+			if ( range_max != 100 ) {
+				float avg_volf = ( (float) pb_volume / range_max ) * 100;
+				avg_vol = (int) avg_volf;
+				avg_vol = (avg_volf - avg_vol < 0.5 ? avg_vol : (avg_vol + 1));
+			} else {
+				avg_vol = (int) pb_volume;
+			}
 		}
 		if ( snd_mixer_selem_has_playback_switch(elem) ) {
 			snd_mixer_selem_get_playback_switch(elem, 0, &pb_switch);
