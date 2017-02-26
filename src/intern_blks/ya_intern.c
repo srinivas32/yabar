@@ -106,16 +106,13 @@ void ya_int_uptime(ya_block_t *blk) {
 
 void ya_int_thermal(ya_block_t *blk) {
 	FILE *tfile;
-	int temp, wrntemp, crttemp, space;
+	int temp, wrntemp, crttemp;
 	uint32_t wrnbg, wrnfg; //warning colors
 	uint32_t crtbg, crtfg; //critical colors
 	char *startstr = blk->buf;
 	size_t prflen=0,suflen=0;
 	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
-	if(blk->internal->spacing)
-		space = 3;
-	else
-		space = 0;
+	uint8_t space = blk->internal->spacing ? 3 : 0;
 	char fpath[128];
 	snprintf(fpath, 128, "/sys/class/thermal/%s/temp", blk->internal->option[0]);
 
@@ -179,15 +176,12 @@ void ya_int_thermal(ya_block_t *blk) {
 }
 
 void ya_int_brightness(ya_block_t *blk) {
-	int bright, space;
+	int bright;
 	char *startstr = blk->buf;
 	size_t prflen=0,suflen=0;
 	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
 	FILE *tfile;
-	if(blk->internal->spacing)
-		space = 3;
-	else
-		space = 0;
+	uint8_t space = blk->internal->spacing ? 3 : 0;
 	char fpath[128];
 	snprintf(fpath, 128, "/sys/class/backlight/%s/brightness", blk->internal->option[0]);
 	tfile = fopen(fpath, "r");
@@ -212,7 +206,6 @@ void ya_int_brightness(ya_block_t *blk) {
 }
 
 void ya_int_bandwidth(ya_block_t * blk) {
-	int space;
 	unsigned long rx, tx, orx, otx;
 	unsigned int rxrate, txrate;
 	FILE *rxfile, *txfile;
@@ -223,11 +216,8 @@ void ya_int_bandwidth(ya_block_t * blk) {
 	size_t prflen=0,suflen=0;
 	char dnstr[20], upstr[20];
 	char ifname[16];
+	uint8_t space = blk->internal->spacing ? 4 : 0;
 	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
-	if(blk->internal->spacing)
-		space = 4;
-	else
-		space = 0;
 	if ( strncmp(blk->internal->option[0], "default", 7) == 0 ) {
 		FILE *routefile;
 		char line[100], *r_ifname, *r_dest;
@@ -310,7 +300,6 @@ void ya_int_bandwidth(ya_block_t * blk) {
 }
 
 void ya_int_memory(ya_block_t *blk) {
-	int space;
 	unsigned long total, free, cached, buffered;
 	float used;
 	FILE *tfile;
@@ -318,11 +307,8 @@ void ya_int_memory(ya_block_t *blk) {
 	char unit;
 	char *startstr = blk->buf;
 	size_t prflen=0,suflen=0;
+	uint8_t space = blk->internal->spacing ? 6 : 0;
 	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
-	if(blk->internal->spacing)
-		space = 6;
-	else
-		space = 0;
 	tfile = fopen("/proc/meminfo", "r");
 	if (tfile == NULL) {
 		fprintf(stderr, "Error opening file %s\n", "/proc/meminfo");
@@ -356,18 +342,14 @@ void ya_int_memory(ya_block_t *blk) {
 
 
 void ya_int_cpu(ya_block_t *blk) {
-	int space;
 	char fpath[] = "/proc/stat";
 	FILE *tfile;
 	long double old[4], cur[4], ya_avg=0.0;
 	char *startstr = blk->buf;
 	size_t prflen=0,suflen=0;
 	char cpustr[20];
+	uint8_t space = blk->internal->spacing ? 5 : 0;
 	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
-	if(blk->internal->spacing)
-		space = 5;
-	else
-		space = 0;
 	tfile = fopen(fpath, "r");
 	if (tfile == NULL) {
 		fprintf(stderr, "Error opening file (%s)\n", fpath);
@@ -399,7 +381,7 @@ void ya_int_cpu(ya_block_t *blk) {
 }
 
 void ya_int_loadavg(ya_block_t *blk) {
-	int space, avg = 0;
+	int avg = 0;
 	char fpath[] = "/proc/loadavg";
 	FILE *tfile;
 	long double cur[4], ya_avg = 0.0;
@@ -407,10 +389,7 @@ void ya_int_loadavg(ya_block_t *blk) {
 	size_t prflen = 0,suflen = 0;
 	char avgstr[20];
 	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
-	if(blk->internal->spacing)
-		space = 3;
-	else
-		space = 0;
+	uint8_t space = blk->internal->spacing ? 3 : 0;
 #ifdef YA_DYN_COL
 	long double crttemp;
 	uint32_t crtbg, crtfg;
@@ -465,7 +444,6 @@ void ya_int_loadavg(ya_block_t *blk) {
 
 
 void ya_int_diskio(ya_block_t *blk) {
-	int space;
 	unsigned long tdo[11], tdc[11];
 	unsigned long drd=0, dwr=0;
 	char crd, cwr;
@@ -474,11 +452,8 @@ void ya_int_diskio(ya_block_t *blk) {
 	char *startstr = blk->buf;
 	size_t prflen=0,suflen=0;
 	char dnstr[20], upstr[20];
+	uint8_t space = blk->internal->spacing ? 4 : 0;
 	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
-	if(blk->internal->spacing)
-		space = 4;
-	else
-		space = 0;
 	if(blk->internal->option[1]) {
 		sscanf(blk->internal->option[1], "%s %s", dnstr, upstr);
 	}
@@ -525,17 +500,14 @@ void ya_int_diskio(ya_block_t *blk) {
 }
 
 void ya_int_battery(ya_block_t *blk) {
-	int bat, space;
+	int bat;
 	char stat;
 	char bat_25str[20], bat_50str[20], bat_75str[20], bat_100str[20], bat_chargestr[20];
 	char *startstr = blk->buf;
 	size_t prflen=0,suflen=0;
 	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
 	FILE *cfile, *sfile;
-	if(blk->internal->spacing)
-		space = 3;
-	else
-		space = 0;
+	uint8_t space = blk->internal->spacing ? 3 : 0;
 	char cpath[128], spath[128];
 	snprintf(cpath, 128, "/sys/class/power_supply/%s/capacity", blk->internal->option[0]);
 	snprintf(spath, 128, "/sys/class/power_supply/%s/status", blk->internal->option[0]);
@@ -596,6 +568,7 @@ void ya_int_volume(ya_block_t *blk) {
 	snd_mixer_t *mixer_handle = NULL;
 	snd_mixer_elem_t *elem;
 	snd_mixer_selem_id_t *sid;
+	uint8_t space = blk->internal->spacing ? 3 : 0;
 	if( blk->internal->option[0] ) {
 		sscanf(blk->internal->option[0], "%s", device);
 	} else {
@@ -662,7 +635,7 @@ void ya_int_volume(ya_block_t *blk) {
 		if ( pb_switch == 0 ) {
 			sprintf(startstr, "%s -", off);
 		} else {
-			sprintf(startstr, "%s %d", on, avg_vol);
+			sprintf(startstr, "%s %*d", on, space, avg_vol);
 		}
 		if ( suflen )
 			strcat(blk->buf, blk->internal->suffix);
