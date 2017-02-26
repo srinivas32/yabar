@@ -66,6 +66,7 @@ static void ya_copy_bar_members(ya_bar_t *dstb, ya_bar_t *srcb) {
 }
 
 static void ya_copy_blk_members(ya_block_t *dstb, ya_block_t *srcb) {
+	dstb->name = srcb->name;
 	dstb->cmd = srcb->cmd;
 	for(int i=0; i<5; i++)
 		dstb->button_cmd[i] = srcb->button_cmd[i];
@@ -83,10 +84,18 @@ static void ya_copy_blk_members(ya_block_t *dstb, ya_block_t *srcb) {
 		dstb->internal = calloc(1, sizeof(blk_intern_t));
 		dstb->internal->prefix = srcb->internal->prefix;
 		dstb->internal->suffix = srcb->internal->suffix;
+		dstb->internal->spacing = srcb->internal->spacing;
 		for(int i=0; i < 3; i++)
 			dstb->internal->option[i] = srcb->internal->option[i];
 		dstb->internal->index = srcb->internal->index;
 	}
+#ifdef YA_DYN_COL
+	dstb->fgcolor_old = srcb->fgcolor_old;
+	dstb->bgcolor_old = srcb->bgcolor_old;
+	dstb->ulcolor_old = srcb->ulcolor_old;
+	dstb->olcolor_old = srcb->olcolor_old;
+#endif //YA_DYN_COL
+
 #ifdef YA_ICON
 	if((srcb->attr & BLKA_ICON)) {
 		dstb->img = calloc(1, sizeof(blk_img_t));
