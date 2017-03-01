@@ -206,6 +206,10 @@ static void ya_setup_bar(config_setting_t * set) {
 			return;
 		}
 	}
+	retcnf = config_setting_lookup_bool(set, "fix-pango", &retint);
+	if(retint == CONFIG_TRUE) {
+		bar->attr |= BARA_FIX_PANGO;
+	}
 	retcnf = config_setting_lookup_string(set, "font", &retstr);
 	if(retcnf == CONFIG_FALSE) {
 		if(NOT_INHERIT_BAR(bar))
@@ -213,6 +217,20 @@ static void ya_setup_bar(config_setting_t * set) {
 	}
 	else {
 		bar->desc = pango_font_description_from_string(retstr);
+		//get all the font families from desc
+		const char *font_fam = pango_font_description_get_family(bar->desc);
+		PangoFontFamily **families;
+		int n_families;
+		pango_font_map_list_families(pango_cairo_font_map_get_default(), &families, &n_families);
+		//check if monospace font family is used; if so, use that font for spaces
+		for(int i = 0; i < n_families; i++) {
+			const char * name = pango_font_family_get_name(families[i]);
+			if(strstr(font_fam, name) != NULL && pango_font_family_is_monospace(families[i])) {
+				bar->mono_font = strdup(name);
+				break;
+			}
+		}
+		g_free(families);
 	}
 
 	retcnf = config_setting_lookup_string(set, "position", &retstr);

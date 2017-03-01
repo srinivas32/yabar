@@ -111,7 +111,8 @@ enum {
 	BARA_INHERIT = 1<<0,
 	BARA_INHERIT_ALL = 1<<1,
 	BARA_DYN_COL = 1<<2,
-	BARA_REDRAW = 1<<3
+	BARA_REDRAW = 1<<3,
+	BARA_FIX_PANGO = 1<<4
 };
 
 //for variable-width blocks, check for whether the bar should be redrawn.
@@ -278,6 +279,7 @@ struct ya_bar {
 	uint8_t position; //top, bottom, left or right.
 
 	PangoFontDescription *desc;
+	char *mono_font;
 
 	ya_block_t *curblk[3];
 	/* curblk[i] should point to the last added block for each alignment. then
