@@ -44,6 +44,40 @@ struct reserved_blk ya_reserved_blks[YA_INTERNAL_LEN] = {
 
 #ifdef YA_INTERNAL
 
+#include <stdarg.h>
+
+FILE* ya_fopen(char* fpath, ya_block_t *blk) {
+	FILE* tfile = fopen(fpath, "r");
+	if (tfile == NULL) {
+		fprintf(stderr, "Error opening file %s\n", fpath);
+		strncpy(blk->buf, "BLOCK ERROR!", strlen("BLOCK ERROR!"));
+		ya_draw_pango_text(blk);
+		pthread_detach(blk->thread);
+		pthread_exit(NULL);
+	}
+	return tfile;
+}
+
+int vya_fscanf(char* fpath, ya_block_t *blk, char *fmt, va_list args) {
+	int ret;
+	FILE* tfile = ya_fopen(fpath, blk);
+	ret = vfscanf(tfile, fmt, args);
+
+	if (ferror(tfile))
+		fprintf(stderr, "Error getting values from file (%s)\n", fpath);
+	fclose(tfile);
+	return ret;
+}
+
+int ya_fscanf(char* fpath, ya_block_t *blk, char *fmt, ...) {
+	int ret;
+	va_list args;
+	va_start(args, fmt);
+	ret = vya_fscanf(fpath, blk, fmt, args);
+	va_end(args);
+	return ret;
+}
+
 inline void ya_setup_prefix_suffix(ya_block_t *blk, size_t * prflen, size_t *suflen, char **startstr) {
 	if(blk->internal->prefix) {
 		*prflen = strlen(blk->internal->prefix);
@@ -105,7 +139,6 @@ void ya_int_uptime(ya_block_t *blk) {
 
 
 void ya_int_thermal(ya_block_t *blk) {
-	FILE *tfile;
 	int temp, wrntemp, crttemp;
 	uint32_t wrnbg, wrnfg; //warning colors
 	uint32_t crtbg, crtfg; //critical colors
@@ -128,20 +161,8 @@ void ya_int_thermal(ya_block_t *blk) {
 		wrnbg = 0xFFF4A345;
 		wrnfg = blk->fgcolor;
 	}
-	tfile = fopen(fpath, "r");
-	if (tfile == NULL) {
-		fprintf(stderr, "Error opening file %s\n", fpath);
-		strncpy(blk->buf, "BLOCK ERROR!", strlen("BLOCK ERROR!"));
-		ya_draw_pango_text(blk);
-		pthread_detach(blk->thread);
-		pthread_exit(NULL);
-	}
-	fclose(tfile);
 	while (1) {
-		tfile = fopen(fpath, "r");
-		if(fscanf(tfile, "%d", &temp) != 1) {
-			fprintf(stderr, "Error getting values from file (%s)\n", fpath);
-		}
+		ya_fscanf(fpath, blk, "%d", &temp);
 		temp/=1000;
 
 #ifdef YA_DYN_COL
@@ -169,7 +190,6 @@ void ya_int_thermal(ya_block_t *blk) {
 		if(suflen)
 			strcat(blk->buf, blk->internal->suffix);
 		ya_draw_pango_text(blk);
-		fclose(tfile);
 		sleep(blk->sleep);
 	}
 
@@ -180,27 +200,15 @@ void ya_int_brightness(ya_block_t *blk) {
 	char *startstr = blk->buf;
 	size_t prflen=0,suflen=0;
 	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
-	FILE *tfile;
 	uint8_t space = blk->internal->spacing ? 3 : 0;
 	char fpath[128];
 	snprintf(fpath, 128, "/sys/class/backlight/%s/brightness", blk->internal->option[0]);
-	tfile = fopen(fpath, "r");
-	if (tfile == NULL) {
-		fprintf(stderr, "Error opening file %s\n", fpath);
-		strncpy(blk->buf, "BLOCK ERROR!", strlen("BLOCK ERROR!"));
-		ya_draw_pango_text(blk);
-		pthread_detach(blk->thread);
-		pthread_exit(NULL);
-	}
 	while(1) {
-		tfile = fopen(fpath, "r");
-		if(fscanf(tfile, "%d", &bright) != 1)
-			fprintf(stderr, "Error getting values from file (%s)\n", fpath);
+		ya_fscanf(fpath, blk, "%d", &bright);
 		sprintf(startstr, "%*d", space, bright);
 		if(suflen)
 			strcat(blk->buf, blk->internal->suffix);
 		ya_draw_pango_text(blk);
-		fclose(tfile);
 		sleep(blk->sleep);
 	}
 }
@@ -208,7 +216,6 @@ void ya_int_brightness(ya_block_t *blk) {
 void ya_int_bandwidth(ya_block_t * blk) {
 	unsigned long rx, tx, orx, otx;
 	unsigned int rxrate, txrate;
-	FILE *rxfile, *txfile;
 	char rxpath[128];
 	char txpath[128];
 	char rxc, txc;
@@ -240,37 +247,12 @@ void ya_int_bandwidth(ya_block_t * blk) {
 	if(blk->internal->option[1]) {
 		sscanf(blk->internal->option[1], "%s %s", dnstr, upstr);
 	}
-	rxfile = fopen(rxpath, "r");
-	txfile = fopen(txpath, "r");
-	if (rxfile == NULL || txfile == NULL) {
-		fprintf(stderr, "Error opening file %s or %s\n", rxpath, txpath);
-		strncpy(blk->buf, "BLOCK ERROR!", strlen("BLOCK ERROR!"));
-		ya_draw_pango_text(blk);
-		//Close if one of the files is opened
-		if(rxfile)
-			fclose(rxfile);
-		if(txfile)
-			fclose(txfile);
-		pthread_detach(blk->thread);
-		pthread_exit(NULL);
-	}
-	else {
-		if(fscanf(rxfile, "%lu", &orx)!=1)
-			fprintf(stderr, "Error getting values from file (%s)\n", rxpath);
-		if(fscanf(txfile, "%lu", &otx)!=1)
-			fprintf(stderr, "Error getting values from file (%s)\n", txpath);
-	}
-	fclose(rxfile);
-	fclose(txfile);
+	ya_fscanf(rxpath, blk, "%lu", &orx);
+	ya_fscanf(txpath, blk, "%lu", &otx);
 	while(1) {
 		txc = rxc = 'K';
-		rxfile = fopen(rxpath, "r");
-		txfile = fopen(txpath, "r");
-
-		if(fscanf(rxfile, "%lu", &rx)!=1)
-			fprintf(stderr, "Error getting values from file (%s)\n", rxpath);
-		if(fscanf(txfile, "%lu", &tx)!=1)
-			fprintf(stderr, "Error getting values from file (%s)\n", txpath);
+		ya_fscanf(rxpath, blk, "%lu", &rx);
+		ya_fscanf(txpath, blk, "%lu", &tx);
 
 		rxrate = (rx - orx)/((blk->sleep)*1024);
 		txrate = (tx - otx)/((blk->sleep)*1024);
@@ -284,7 +266,6 @@ void ya_int_bandwidth(ya_block_t * blk) {
 			txc = 'M';
 		}
 
-
 		orx = rx;
 		otx = tx;
 
@@ -292,8 +273,6 @@ void ya_int_bandwidth(ya_block_t * blk) {
 		if(suflen)
 			strcat(blk->buf, blk->internal->suffix);
 		ya_draw_pango_text(blk);
-		fclose(rxfile);
-		fclose(txfile);
 		sleep(blk->sleep);
 	}
 
@@ -309,13 +288,7 @@ void ya_int_memory(ya_block_t *blk) {
 	size_t prflen=0,suflen=0;
 	uint8_t space = blk->internal->spacing ? 6 : 0;
 	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
-	tfile = fopen("/proc/meminfo", "r");
-	if (tfile == NULL) {
-		fprintf(stderr, "Error opening file %s\n", "/proc/meminfo");
-		strncpy(blk->buf, "BLOCK ERROR!", strlen("BLOCK ERROR!"));
-		ya_draw_pango_text(blk);
-		pthread_exit(NULL);
-	}
+	tfile = ya_fopen("/proc/meminfo", blk);
 	fclose(tfile);
 	while(1) {
 		tfile = fopen("/proc/meminfo", "r");
@@ -343,30 +316,15 @@ void ya_int_memory(ya_block_t *blk) {
 
 void ya_int_cpu(ya_block_t *blk) {
 	char fpath[] = "/proc/stat";
-	FILE *tfile;
 	long double old[4], cur[4], ya_avg=0.0;
 	char *startstr = blk->buf;
 	size_t prflen=0,suflen=0;
 	char cpustr[20];
 	uint8_t space = blk->internal->spacing ? 5 : 0;
 	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
-	tfile = fopen(fpath, "r");
-	if (tfile == NULL) {
-		fprintf(stderr, "Error opening file (%s)\n", fpath);
-		strncpy(blk->buf, "BLOCK ERROR!", strlen("BLOCK ERROR!"));
-		ya_draw_pango_text(blk);
-		pthread_exit(NULL);
-	}
-	else {
-		if(fscanf(tfile,"%s %Lf %Lf %Lf %Lf",cpustr, &old[0],&old[1],&old[2],&old[3])!=5)
-			fprintf(stderr, "Error getting values from file (%s)\n", fpath);
-
-	}
-	fclose(tfile);
+	ya_fscanf(fpath, blk, "%s %Lf %Lf %Lf %Lf",cpustr, &old[0],&old[1],&old[2],&old[3]);
 	while(1) {
-		tfile = fopen(fpath, "r");
-		if(fscanf(tfile,"%s %Lf %Lf %Lf %Lf", cpustr, &cur[0],&cur[1],&cur[2],&cur[3])!=5)
-			fprintf(stderr, "Error getting values from file (%s)\n", fpath);
+		ya_fscanf(fpath, blk, "%s %Lf %Lf %Lf %Lf",cpustr, &cur[0],&cur[1],&cur[2],&cur[3]);
 		ya_avg = ((cur[0]+cur[1]+cur[2]) - (old[0]+old[1]+old[2])) / ((cur[0]+cur[1]+cur[2]+cur[3]) - (old[0]+old[1]+old[2]+old[3]));
 		for(int i=0; i<4;i++)
 			old[i]=cur[i];
@@ -375,7 +333,6 @@ void ya_int_cpu(ya_block_t *blk) {
 		if(suflen)
 			strcat(blk->buf, blk->internal->suffix);
 		ya_draw_pango_text(blk);
-		fclose(tfile);
 		sleep(blk->sleep);
 	}
 }
@@ -447,7 +404,6 @@ void ya_int_diskio(ya_block_t *blk) {
 	unsigned long tdo[11], tdc[11];
 	unsigned long drd=0, dwr=0;
 	char crd, cwr;
-	FILE *tfile;
 	char tpath[100];
 	char *startstr = blk->buf;
 	size_t prflen=0,suflen=0;
@@ -458,23 +414,11 @@ void ya_int_diskio(ya_block_t *blk) {
 		sscanf(blk->internal->option[1], "%s %s", dnstr, upstr);
 	}
 	snprintf(tpath, 100, "/sys/class/block/%s/stat", blk->internal->option[0]);
-	tfile = fopen(tpath, "r");
-	if (tfile == NULL) {
-		fprintf(stderr, "Error opening file %s\n", tpath);
-		strncpy(blk->buf, "BLOCK ERROR!", strlen("BLOCK ERROR!"));
-		ya_draw_pango_text(blk);
-		pthread_detach(blk->thread);
-		pthread_exit(NULL);
-	}
-	else {
-		if(fscanf(tfile,"%lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu", &tdo[0], &tdo[1], &tdo[2], &tdo[3], &tdo[4], &tdo[5], &tdo[6], &tdo[7], &tdo[8], &tdo[9], &tdo[10])!=11)
-			fprintf(stderr, "Error getting values from file (%s)\n", tpath);
-	}
-	fclose(tfile);
+
+	ya_fscanf(tpath, blk, "%lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu", &tdo[0], &tdo[1], &tdo[2], &tdo[3], &tdo[4], &tdo[5], &tdo[6], &tdo[7], &tdo[8], &tdo[9], &tdo[10]);
 	while(1) {
-		tfile = fopen(tpath, "r");
-		if(fscanf(tfile,"%lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu", &tdc[0], &tdc[1], &tdc[2], &tdc[3], &tdc[4], &tdc[5], &tdc[6], &tdc[7], &tdc[8], &tdc[9], &tdc[10])!=11)
-			fprintf(stderr, "Error getting values from file (%s)\n", tpath);
+		ya_fscanf(tpath, blk, "%lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu", &tdc[0], &tdc[1], &tdc[2], &tdc[3], &tdc[4], &tdc[5], &tdc[6], &tdc[7], &tdc[8], &tdc[9], &tdc[10]);
+
 		drd = (unsigned long)(((float)(tdc[2] - tdo[2])*0.5)/((float)(blk->sleep)));
 		dwr = (unsigned long)(((float)(tdc[6] - tdo[6])*0.5)/((float)(blk->sleep)));
 		crd = cwr = 'K';
@@ -493,7 +437,6 @@ void ya_int_diskio(ya_block_t *blk) {
 			strcat(blk->buf, blk->internal->suffix);
 
 		ya_draw_pango_text(blk);
-		fclose(tfile);
 		sleep(blk->sleep);
 	}
 
@@ -506,7 +449,6 @@ void ya_int_battery(ya_block_t *blk) {
 	char *startstr = blk->buf;
 	size_t prflen=0,suflen=0;
 	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
-	FILE *cfile, *sfile;
 	uint8_t space = blk->internal->spacing ? 3 : 0;
 	char cpath[128], spath[128];
 	snprintf(cpath, 128, "/sys/class/power_supply/%s/capacity", blk->internal->option[0]);
@@ -514,29 +456,10 @@ void ya_int_battery(ya_block_t *blk) {
 	if(blk->internal->option[1]) {
 		sscanf(blk->internal->option[1], "%s %s %s %s %s", bat_25str, bat_50str, bat_75str, bat_100str, bat_chargestr);
 	}
-	cfile = fopen(cpath, "r");
-	sfile = fopen(spath, "r");
-	if (cfile == NULL || sfile == NULL) {
-		fprintf(stderr, "Error opening file %s or %s\n", cpath, spath);
-		strncpy(blk->buf, "BLOCK ERROR!", strlen("BLOCK ERROR!"));
-		ya_draw_pango_text(blk);
-		//Close if one of the files is opened
-		if(cfile)
-			fclose(cfile);
-		if(sfile)
-			fclose(sfile);
-		pthread_detach(blk->thread);
-		pthread_exit(NULL);
-	}
-	fclose(cfile);
-	fclose(sfile);
+
 	while(1) {
-		cfile = fopen(cpath, "r");
-		sfile = fopen(spath, "r");
-		if(fscanf(cfile, "%d", &bat) != 1)
-			fprintf(stderr, "Error getting values from file (%s)\n", cpath);
-		if(fscanf(sfile, "%c", &stat) != 1)
-			fprintf(stderr, "Error getting values from file (%s)\n", spath);
+		ya_fscanf(cpath, blk, "%d", &bat);
+		ya_fscanf(spath, blk, "%c", &stat);
 		if(bat <= 25)
 			strcpy(startstr, bat_25str);
 		else if(bat <= 50)
@@ -551,8 +474,6 @@ void ya_int_battery(ya_block_t *blk) {
 		if(suflen)
 			strcat(blk->buf, blk->internal->suffix);
 		ya_draw_pango_text(blk);
-		fclose(cfile);
-		fclose(sfile);
 		sleep(blk->sleep);
 	}
 }
