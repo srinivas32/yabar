@@ -575,9 +575,10 @@ ya_volume_error:
 	pthread_exit(NULL);
 }
 
+#include <netinet/in.h>
 #include <net/if.h>
+#include <linux/wireless.h>
 #include <iwlib.h>
-#include <wireless.h>
 
 struct wireless_stats {
     struct sockaddr addr;
