@@ -650,7 +650,7 @@ static int ya_int_get_wireless_info(struct wireless_stats* ws, char *dev_name) {
 void ya_int_wifi(ya_block_t *blk) {
     struct wireless_stats ws;
     char *startstr = blk->buf;
-	size_t prflen = 0, suflen = 0;
+    size_t prflen = 0, suflen = 0;
     ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
 
     while(1) {
