@@ -584,7 +584,6 @@ struct wireless_stats {
     struct sockaddr addr;
     char name[IFNAMSIZ + 1];
     char essid[IW_ESSID_MAX_SIZE + 1];
-    char ap[18];
     char mode[16];
     char freq[16];
     int channel;
@@ -609,7 +608,7 @@ static int ya_int_get_wireless_info(struct wireless_stats* ws, char *dev_name) {
 
     if (iw_get_basic_config(skfd, dev_name, &(winfo.b)) > -1) {
 
-        // set present winfo variables
+        /* Check availability of variables */
         if (iw_get_range_info(skfd, dev_name, &(winfo.range)) >= 0) {
             winfo.has_range = 1;
         }
@@ -630,18 +629,14 @@ static int ya_int_get_wireless_info(struct wireless_stats* ws, char *dev_name) {
         }
 
         /* ESSID */
-        if (winfo.b.has_essid) {
-            if (winfo.b.essid_on) {
-                snprintf(ws->essid, 32, "%s", winfo.b.essid);
-            }
+        if (winfo.b.has_essid && winfo.b.essid_on) {
+            snprintf(ws->essid, IW_ESSID_MAX_SIZE+1, "%s", winfo.b.essid);
         }
 
         /* Channel and Frequency */
-        if (winfo.b.has_freq) {
-            if(winfo.has_range == 1) {
-                ws->channel = iw_freq_to_channel(winfo.b.freq, &(winfo.range));
-                iw_print_freq_value(ws->freq, 16, winfo.b.freq);
-            }
+        if (winfo.b.has_freq && winfo.has_range == 1) {
+            ws->channel = iw_freq_to_channel(winfo.b.freq, &(winfo.range));
+            iw_print_freq_value(ws->freq, 16, winfo.b.freq);
         }
 
         snprintf(ws->mode, 16, "%s", iw_operation_mode[winfo.b.mode]);
