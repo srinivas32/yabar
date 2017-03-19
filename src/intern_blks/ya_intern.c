@@ -20,6 +20,7 @@ void ya_int_diskio(ya_block_t *blk);
 void ya_int_network(ya_block_t *blk);
 void ya_int_battery(ya_block_t *blk);
 void ya_int_volume(ya_block_t *blk);
+void ya_int_wifi(ya_block_t *blk);
 
 struct reserved_blk ya_reserved_blks[YA_INTERNAL_LEN] = {
 	{"YABAR_DATE", ya_int_date},
@@ -34,6 +35,7 @@ struct reserved_blk ya_reserved_blks[YA_INTERNAL_LEN] = {
 	{"YABAR_NETWORK", ya_int_network},
 	{"YABAR_BATTERY", ya_int_battery},
 	{"YABAR_VOLUME", ya_int_volume},
+	{"YABAR_WIFI", ya_int_wifi},
 #ifdef YA_INTERNAL_EWMH
 	{"YABAR_TITLE", NULL},
 	{"YABAR_WORKSPACE", NULL}
@@ -572,6 +574,103 @@ ya_volume_error:
 	pthread_detach(blk->thread);
 	pthread_exit(NULL);
 }
+
+#include <netinet/in.h>
+#include <net/if.h>
+#include <linux/wireless.h>
+#include <iwlib.h>
+
+struct wireless_stats {
+    struct sockaddr addr;
+    char name[IFNAMSIZ + 1];
+    char essid[IW_ESSID_MAX_SIZE + 1];
+    char mode[16];
+    char freq[16];
+    int channel;
+    char bitrate[16];
+    int link_qual;  /* calculate percentage from link_qual and link_qual_max */
+    int link_qual_max;
+    int link_level; /* dBm */
+    int link_noise; /* dBm */
+};
+
+static int ya_int_get_wireless_info(struct wireless_stats* ws, char *dev_name) {
+    int skfd;
+    struct wireless_info winfo;
+
+    /* not all fields may be initialized, so set them to zero */
+    memset(ws, 0, sizeof(struct wireless_stats));
+    memset(&winfo, 0, sizeof(struct wireless_info));
+
+    skfd = iw_sockets_open();
+
+    snprintf(ws->name, IFNAMSIZ+1, "%s", dev_name);
+
+    if (iw_get_basic_config(skfd, dev_name, &(winfo.b)) > -1) {
+
+        /* Check availability of variables */
+        if (iw_get_range_info(skfd, dev_name, &(winfo.range)) >= 0) {
+            winfo.has_range = 1;
+        }
+
+        if (iw_get_stats(skfd, dev_name, &(winfo.stats), &winfo.range, winfo.has_range) >= 0) {
+            winfo.has_stats = 1;
+        }
+
+        /* Link Quality */
+        if (winfo.has_range && winfo.has_stats && ((winfo.stats.qual.level != 0)
+                || (winfo.stats.qual.updated & IW_QUAL_DBM))) {
+            if (!(winfo.stats.qual.updated & IW_QUAL_QUAL_INVALID)) {
+                ws->link_qual = winfo.stats.qual.qual;
+                ws->link_qual_max = winfo.range.max_qual.qual;
+                ws->link_noise = winfo.stats.qual.noise;
+                ws->link_level = winfo.stats.qual.level;
+            }
+        }
+
+        /* ESSID */
+        if (winfo.b.has_essid && winfo.b.essid_on) {
+            snprintf(ws->essid, IW_ESSID_MAX_SIZE+1, "%s", winfo.b.essid);
+        }
+
+        /* Channel and Frequency */
+        if (winfo.b.has_freq && winfo.has_range == 1) {
+            ws->channel = iw_freq_to_channel(winfo.b.freq, &(winfo.range));
+            iw_print_freq_value(ws->freq, 16, winfo.b.freq);
+        }
+
+        snprintf(ws->mode, 16, "%s", iw_operation_mode[winfo.b.mode]);
+
+    }
+    iw_sockets_close(skfd);
+
+    return 0;
+}
+
+void ya_int_wifi(ya_block_t *blk) {
+    struct wireless_stats ws;
+    char *startstr = blk->buf;
+    size_t prflen = 0, suflen = 0;
+    ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
+
+    while(1) {
+        if ( ya_int_get_wireless_info(&ws, blk->internal->option[0]) ) {
+            strcpy(blk->buf, "BLOCK ERROR!");
+            ya_draw_pango_text(blk);
+            sleep(blk->sleep);
+            continue;
+        }
+
+        sprintf(startstr, "%s (%d%%)", ws.essid, ws.link_qual*100 / ws.link_qual_max);
+        if(suflen)
+            strcat(blk->buf, blk->internal->suffix);
+
+        ya_draw_pango_text(blk);
+        sleep(blk->sleep);
+    }
+
+}
+
 
 #define _GNU_SOURCE
 #include <sys/socket.h>

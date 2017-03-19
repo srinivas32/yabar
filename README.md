@@ -48,8 +48,8 @@ AUR: [yabar](https://aur.archlinux.org/packages/yabar/) and [yabar-git](https://
 ### From Source
 Yabar initially requires a C compiler (e.g. gcc or clang), make as well as the libraries libconfig, cairo, pango and alsa. The feature `DYA_INTERNAL_EWMH` in `Makefile` additionaly xcb-ewmh (or xcb-util-wm in some distros) and the feature `-DYA_ICON` requires gdk-pixbuf2. These dependencies can be installed through your distribution's package manager:
 
-* Fedora: `dnf install libconfig-devel cairo-devel pango-devel gdk-pixbuf2-devel alsa-lib-devel xcb-util-wm-devel`
-* Debian / Ubuntu: `apt-get install libcairo2-dev libpango1.0-dev libconfig-dev libxcb-randr0-dev libxcb-ewmh-dev libgdk-pixbuf2.0-dev libasound2-dev`
+* Fedora: `dnf install libconfig-devel cairo-devel pango-devel gdk-pixbuf2-devel alsa-lib-devel xcb-util-wm-devel wireless-tools-devel`
+* Debian / Ubuntu: `apt-get install libcairo2-dev libpango1.0-dev libconfig-dev libxcb-randr0-dev libxcb-ewmh-dev libgdk-pixbuf2.0-dev libasound2-dev libiw-dev`
 
 You can install yabar as follows:
 

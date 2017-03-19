@@ -13,6 +13,7 @@ addons:
       - libxcb-ewmh-dev
       - libxcb-icccm4-dev
       - libasound2-dev
+      - libiw-dev
 before_install:
     - export CPPFLAGS=-DOLD_LIBCONFIG
 script: make
