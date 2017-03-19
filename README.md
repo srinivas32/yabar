@@ -330,6 +330,12 @@ Yabar has a growing set of useful blocks. You can try out the sampe config locat
 		internal-option3 : " "; # characters to display when sound is on or off (separated by a space)
 		internal-suffix: "%";
 
+* Wifi: Displays the SSID of the Wifi AP and the strength in percent. Example:
+
+		exec: "YABAR_WIFI";
+		internal-option1: "wlan0";
+		internal-prefix: " ";
+		fixed-size: 150;
 
 ## License
 
