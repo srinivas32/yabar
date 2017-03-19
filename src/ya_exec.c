@@ -346,6 +346,16 @@ static int ya_init_randr() {
 		//printf("%s %d %d %d %d %d\n", tmpmon->name, tname_len, tmpmon->pos.x,
 		//		tmpmon->pos.y, tmpmon->pos.width, tmpmon->pos.height);
 	}
+
+	const xcb_query_extension_reply_t *ext = xcb_get_extension_data(ya.c, &xcb_randr_id);
+	if(!ext->present)
+		fprintf(stderr, "RandR extension not found\n");
+	else {
+		//listen for screen change events
+		xcb_randr_select_input(ya.c, ya.scr->root, XCB_RANDR_NOTIFY_MASK_SCREEN_CHANGE);
+		ya.xrandr_offset = ext->first_event;
+	}
+
 	return 0;
 }
 
@@ -367,6 +377,9 @@ void ya_process_opt(int argc, char *argv[]) {
 				break;
 		}
 	}
+
+	ya.argv = argv;
+
 }
 
 /*
@@ -378,7 +391,7 @@ void ya_init() {
 	signal(SIGKILL, ya_sighandler);
 	signal(SIGHUP, ya_sighandler);
 	ya.depth = 32;
-	ya.c 	= xcb_connect(NULL, NULL);
+	ya.c 	= xcb_connect(NULL, &ya.scr_num);
 	ya.scr 	= xcb_setup_roots_iterator(xcb_get_setup(ya.c)).data;
 	ya.visualtype = ya_get_visualtype();
 	if (ya.visualtype == NULL) {
@@ -579,3 +592,17 @@ void ya_handle_prop_notify(xcb_property_notify_event_t *ep) {
 	ya.lstws = ya.curws;
 }
 #endif //YA_INTERNAL_EWMH
+
+/*
+ * Handle RandR screen change events
+ */
+void ya_handle_screen_change(xcb_randr_screen_change_notify_event_t *ev) {
+	//cleanup everything and reload self
+	ya_cleanup_x();
+	ya_cleanup_blocks();
+	fprintf(stderr, "Screen change found, reloading...\n");
+	if(execvp(ya.argv[0], ya.argv)) {
+		fprintf(stderr, "Error reloading, exiting now.\n");
+		raise(SIGKILL);
+	}
+}

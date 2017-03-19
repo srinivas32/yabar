@@ -112,13 +112,13 @@ width: 800;
 .fi
 .RE
 .IP \(bu 2
-Monitor: This option is used to specify the monitor using randr extension for the bar to be drawn on. You can find the name of your monitors using \fB\fCxrandr \-q\fR command. The default value is the first active monitor. Example:
+Monitor: This option is used to specify the monitor using randr extension for the bar to be drawn on. You can find the name of your monitors using \fB\fCxrandr \-q\fR command. The default value is the first active monitor. A fallback monitor can be provided if the first option is unavailable. Example:
 .PP
 .RS
 
 .nf
 monitor: "LVDS1";
-monitor: "VGA1";
+monitor-fallback: "VGA1";
 
 .fi
 .RE

@@ -237,18 +237,29 @@ static void ya_setup_bar(config_setting_t * set) {
 		}
 	}
 	retcnf = config_setting_lookup_string(set, "monitor", &retstr);
-	if(retcnf == CONFIG_FALSE) {
-		//If not explicitly specified, fall back to the first active monitor.
-		if((ya.gen_flag & GEN_RANDR) && NOT_INHERIT_BAR(bar)) {
-			for(bar->mon= ya.curmon; bar->mon->prev_mon; bar->mon = bar->mon->prev_mon);
+
+	// copy config string because strtok will destroy it
+	size_t mon_conf_len = strlen(retstr)+1;
+	char *mon_conf = malloc(sizeof(char)*mon_conf_len);
+	snprintf(mon_conf, mon_conf_len, "%s", retstr);
+
+	if(retcnf == CONFIG_TRUE && (ya.gen_flag & GEN_RANDR)) {
+		for(char *m = strtok(mon_conf, " "); m != NULL; m = strtok(NULL, " ")) {
+			bar->mon = ya_get_monitor_from_name(m);
+			if(bar->mon != NULL) {
+				printf("Using monitor %s\n", m);
+				break;
+			}
 		}
 	}
-	else {
-		if((ya.gen_flag & GEN_RANDR)) {
-			bar->mon = ya_get_monitor_from_name(retstr);
-			//If null, fall back to the first active monitor
-			if(bar->mon == NULL)
-				for(bar->mon= ya.curmon; bar->mon->prev_mon; bar->mon = bar->mon->prev_mon);
+
+	free(mon_conf);
+	mon_conf = NULL;
+
+	if(bar->mon == NULL) {
+		// No specified monitor found, fall back to the first active monitor.
+		if((ya.gen_flag & GEN_RANDR) && NOT_INHERIT_BAR(bar)) {
+			for(bar->mon= ya.curmon; bar->mon->prev_mon; bar->mon = bar->mon->prev_mon);
 		}
 	}
 
@@ -787,4 +798,3 @@ void ya_config_parse() {
 	}
 	config_destroy(&ya_conf);
 }
-
