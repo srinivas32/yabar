@@ -48,15 +48,32 @@ struct reserved_blk ya_reserved_blks[YA_INTERNAL_LEN] = {
 
 #include <stdarg.h>
 
+/* generic function to print error messages from blocks */
+void ya_block_error(ya_block_t *blk, char *error_msg, ...) {
+	va_list args;
+	if(blk == NULL)
+		return;
+
+	strcpy(blk->buf, "BLOCK ERROR!");
+	ya_draw_pango_text(blk);
+
+	fprintf(stderr, "E: %s.%s: ", blk->bar->name, blk->name);
+	va_start(args, error_msg);
+	fprintf(stderr, error_msg, args);
+	va_end(args);
+	fprintf(stderr, "\n");
+
+	fflush(stderr);
+
+	pthread_detach(blk->thread);
+	pthread_exit(NULL);
+}
+
 FILE* ya_fopen(char* fpath, ya_block_t *blk) {
 	FILE* tfile = fopen(fpath, "r");
-	if (tfile == NULL) {
-		fprintf(stderr, "Error opening file %s\n", fpath);
-		strncpy(blk->buf, "BLOCK ERROR!", strlen("BLOCK ERROR!"));
-		ya_draw_pango_text(blk);
-		pthread_detach(blk->thread);
-		pthread_exit(NULL);
-	}
+	if (tfile == NULL)
+		ya_block_error(blk, "Failed to open file %s", fpath);
+
 	return tfile;
 }
 
@@ -92,7 +109,6 @@ inline void ya_setup_prefix_suffix(ya_block_t *blk, size_t * prflen, size_t *suf
 		*suflen = strlen(blk->internal->suffix);
 	}
 }
-
 
 #include <time.h>
 void ya_int_date(ya_block_t * blk) {
@@ -164,7 +180,9 @@ void ya_int_thermal(ya_block_t *blk) {
 		wrnfg = blk->fgcolor;
 	}
 	while (1) {
-		ya_fscanf(fpath, blk, "%d", &temp);
+		if(ya_fscanf(fpath, blk, "%d", &temp) == 0)
+			ya_block_error(blk, "Reading %s failed", fpath);
+
 		temp/=1000;
 
 #ifdef YA_DYN_COL
@@ -206,7 +224,9 @@ void ya_int_brightness(ya_block_t *blk) {
 	char fpath[128];
 	snprintf(fpath, 128, "/sys/class/backlight/%s/brightness", blk->internal->option[0]);
 	while(1) {
-		ya_fscanf(fpath, blk, "%d", &bright);
+		if(ya_fscanf(fpath, blk, "%d", &bright) == 0)
+			ya_block_error(blk, "Reading %s failed", fpath);
+
 		sprintf(startstr, "%*d", space, bright);
 		if(suflen)
 			strcat(blk->buf, blk->internal->suffix);
@@ -326,7 +346,10 @@ void ya_int_cpu(ya_block_t *blk) {
 	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
 	ya_fscanf(fpath, blk, "%s %Lf %Lf %Lf %Lf",cpustr, &old[0],&old[1],&old[2],&old[3]);
 	while(1) {
-		ya_fscanf(fpath, blk, "%s %Lf %Lf %Lf %Lf",cpustr, &cur[0],&cur[1],&cur[2],&cur[3]);
+		if(ya_fscanf(fpath, blk, "%s %Lf %Lf %Lf %Lf",
+					 cpustr, &cur[0], &cur[1], &cur[2], &cur[3]) == 0)
+			ya_block_error(blk, "Reading %s failed", fpath);
+
 		ya_avg = ((cur[0]+cur[1]+cur[2]) - (old[0]+old[1]+old[2])) / ((cur[0]+cur[1]+cur[2]+cur[3]) - (old[0]+old[1]+old[2]+old[3]));
 		for(int i=0; i<4;i++)
 			old[i]=cur[i];
@@ -375,8 +398,10 @@ void ya_int_loadavg(ya_block_t *blk) {
 #endif
 	while(1) {
 		tfile = fopen(fpath, "r");
-		if(fscanf(tfile,"%Lf %Lf %Lf %s %Lf", &cur[0],&cur[1],&cur[2],avgstr,&cur[3])!=5)
-			fprintf(stderr, "Error getting values from file (%s)\n", fpath);
+		if(fscanf(tfile,"%Lf %Lf %Lf %s %Lf",
+				  &cur[0], &cur[1], &cur[2], avgstr, &cur[3]) != 5)
+			ya_block_error(blk, "Getting values from %s failed", fpath);
+
 		ya_avg = cur[avg];
 #ifdef YA_DYN_COL
 		if(ya_avg > crttemp) {
@@ -417,9 +442,14 @@ void ya_int_diskio(ya_block_t *blk) {
 	}
 	snprintf(tpath, 100, "/sys/class/block/%s/stat", blk->internal->option[0]);
 
-	ya_fscanf(tpath, blk, "%lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu", &tdo[0], &tdo[1], &tdo[2], &tdo[3], &tdo[4], &tdo[5], &tdo[6], &tdo[7], &tdo[8], &tdo[9], &tdo[10]);
+	if(ya_fscanf(tpath, blk, "%lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu", &tdo[0], &tdo[1], &tdo[2], &tdo[3], &tdo[4], &tdo[5], &tdo[6], &tdo[7], &tdo[8], &tdo[9], &tdo[10]) == 0) {
+		   ya_block_error(blk, "Getting values from %s failed", tpath);
+	   }
+
 	while(1) {
-		ya_fscanf(tpath, blk, "%lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu", &tdc[0], &tdc[1], &tdc[2], &tdc[3], &tdc[4], &tdc[5], &tdc[6], &tdc[7], &tdc[8], &tdc[9], &tdc[10]);
+		if(ya_fscanf(tpath, blk, "%lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu",
+					 &tdc[0], &tdc[1], &tdc[2], &tdc[3], &tdc[4], &tdc[5], &tdc[6], &tdc[7], &tdc[8], &tdc[9], &tdc[10]) == 0)
+		   ya_block_error(blk, "Getting values from %s failed", tpath);
 
 		drd = (unsigned long)(((float)(tdc[2] - tdo[2])*0.5)/((float)(blk->sleep)));
 		dwr = (unsigned long)(((float)(tdc[6] - tdo[6])*0.5)/((float)(blk->sleep)));
@@ -460,8 +490,11 @@ void ya_int_battery(ya_block_t *blk) {
 	}
 
 	while(1) {
-		ya_fscanf(cpath, blk, "%d", &bat);
-		ya_fscanf(spath, blk, "%c", &stat);
+		if(ya_fscanf(cpath, blk, "%d", &bat) == 0)
+			ya_block_error(blk, "Getting values from %s failed", cpath);
+		if(ya_fscanf(spath, blk, "%c", &stat) == 0)
+			ya_block_error(blk, "Getting values from %s failed", cpath);
+
 		if(bat <= 25)
 			strcpy(startstr, bat_25str);
 		else if(bat <= 50)
@@ -495,51 +528,38 @@ void ya_int_volume(ya_block_t *blk) {
 	if( blk->internal->option[0] ) {
 		sscanf(blk->internal->option[0], "%s", device);
 	} else {
-		fprintf(stderr,"YABAR_VOLUME : internal-option1 is mandatory\n");
-		goto ya_volume_error;
+		ya_block_error(blk, "internal-option1 (device) is mandatory");
 	}
 	if( blk->internal->option[1] ) {
 		sscanf(blk->internal->option[1], "%s %d", mixer_name, &mixer_index);
 	} else {
-		fprintf(stderr, "YABAR_VOLUME : internal-option2 is mandatory\n");
-		goto ya_volume_error;
+		ya_block_error(blk, "internal-option2 (mixer) is mandatory");
 	}
 	if( blk->internal->option[2] ) {
 		sscanf(blk->internal->option[2], "%s %s", on, off);
 	}
 	if ( (ret = snd_mixer_open(&mixer_handle, 0)) < 0 ) {
-		fprintf(stderr, "YABAR_VOLUME: unable to open mixer: %s\n",
-				snd_strerror(ret));
-		goto ya_volume_error;
+		ya_block_error(blk, "Unable to open mixer: %s", snd_strerror(ret));
 	}
 	if ( (ret = snd_mixer_attach(mixer_handle, device)) < 0 ) {
-		fprintf(stderr, "YABAR_VOLUME: unable to attach mixer to device: %s\n",
-				snd_strerror(ret));
-		goto ya_volume_error;
+		ya_block_error(blk, "Unable to attach mixer to device: %s", snd_strerror(ret));
 	}
 	if ( (ret = snd_mixer_selem_register(mixer_handle, NULL, NULL)) < 0 ) {
-		fprintf(stderr, "YABAR_VOLUME: unable to register mixer: %s\n",
-				snd_strerror(ret));
-		goto ya_volume_error;
+		ya_block_error(blk, "Unable to register mixer: %s", snd_strerror(ret));
 	}
 	if ( (ret = snd_mixer_load(mixer_handle)) < 0 ) {
-		fprintf(stderr, "YABAR_VOLUME: unable to load mixer elements: %s\n",
-				snd_strerror(ret));
-		goto ya_volume_error;
+		ya_block_error(blk, "Unable to load mixer elements: %s", snd_strerror(ret));
 	}
 	snd_mixer_selem_id_malloc(&sid);
 	if ( sid == NULL ) {
-		goto ya_volume_error;
+		ya_block_error(blk, "Failed to allocate an invalid snd_mixer_selem_id using standard malloc");
 	}
 	snd_mixer_selem_id_set_index(sid, mixer_index);
 	snd_mixer_selem_id_set_name(sid, mixer_name);
 	elem = snd_mixer_find_selem(mixer_handle, sid);
 	if ( elem == NULL ) {
-		fprintf(stderr, "YABAR_VOLUME: unable to find index %i of mixer %s \n",
-				snd_mixer_selem_id_get_index(sid),
-				snd_mixer_selem_id_get_name(sid));
-		snd_mixer_selem_id_free(sid);
-		goto ya_volume_error;
+		ya_block_error(blk, "Unable to find index %i of mixer %s",
+				snd_mixer_selem_id_get_index(sid), snd_mixer_selem_id_get_name(sid));
 	}
 	snd_mixer_selem_get_playback_volume_range(elem, &range_min, &range_max);
 	while (1) {
@@ -564,10 +584,6 @@ void ya_int_volume(ya_block_t *blk) {
 			strcat(blk->buf, blk->internal->suffix);
 		ya_draw_pango_text(blk);
 		sleep(blk->sleep);
-	}
-ya_volume_error:
-	if ( mixer_handle != NULL ) {
-		snd_mixer_close(mixer_handle);
 	}
 	strncpy(blk->buf, "BLOCK ERROR!", strlen("BLOCK ERROR!"));
 	ya_draw_pango_text(blk);
@@ -654,11 +670,8 @@ void ya_int_wifi(ya_block_t *blk) {
     ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
 
     while(1) {
-        if ( ya_int_get_wireless_info(&ws, blk->internal->option[0]) ) {
-            strcpy(blk->buf, "BLOCK ERROR!");
-            ya_draw_pango_text(blk);
-            sleep(blk->sleep);
-            continue;
+        if (ya_int_get_wireless_info(&ws, blk->internal->option[0]) || ws.link_qual_max == 0) {
+			ya_block_error(blk, "Failed to retrieve wireless info for device %s", blk->internal->option[0]);
         }
 
         sprintf(startstr, "%s (%d%%)", ws.essid, ws.link_qual*100 / ws.link_qual_max);
