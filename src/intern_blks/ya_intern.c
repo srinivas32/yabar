@@ -728,12 +728,8 @@ void ya_int_diskspace(ya_block_t *blk) {
 	}
 	endmntent(mntentfile);
 	if ( mntpntcount == -1 ) {
-		fprintf(stderr, "no mount points found for prefix \"%s\"\n",
-				blk->internal->option[0]);
-		strncpy(blk->buf, "BLOCK ERROR!", strlen("BLOCK ERROR!"));
-		ya_draw_pango_text(blk);
-		pthread_detach(blk->thread);
-		pthread_exit(NULL);
+		ya_block_error(blk, "no mount points found for prefix \"%s\"",
+					   blk->internal->option[0]);
 	}
 	uint64_t free, total;
 	struct statvfs stat;
