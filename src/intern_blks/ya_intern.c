@@ -345,6 +345,16 @@ void ya_int_cpu(ya_block_t *blk) {
 	size_t prflen=0,suflen=0;
 	char cpustr[20];
 	uint8_t space = blk->internal->spacing ? 5 : 0;
+#ifdef YA_DYN_COL
+	long double crttemp;
+	uint32_t crtbg, crtfg;
+	if((blk->internal->option[1]==NULL) ||
+			(sscanf(blk->internal->option[1], "%Lf %x %x", &crttemp, &crtfg, &crtbg)!=3)) {
+		crttemp = 80.0;
+		crtbg = 0xFFED303C;
+		crtfg = blk->fgcolor;
+	}
+#endif
 	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
 	ya_fscanf(fpath, blk, "%s %Lf %Lf %Lf %Lf",cpustr, &old[0],&old[1],&old[2],&old[3]);
 	while(1) {
@@ -356,6 +366,20 @@ void ya_int_cpu(ya_block_t *blk) {
 		for(int i=0; i<4;i++)
 			old[i]=cur[i];
 		ya_avg *= 100.0;
+#ifdef YA_DYN_COL
+		if(ya_avg > crttemp) {
+			blk->bgcolor = crtbg;
+			xcb_change_gc(ya.c, blk->gc, XCB_GC_FOREGROUND, (const uint32_t[]){crtbg});
+			blk->attr |= BLKA_DIRTY_COL;
+			blk->fgcolor = crtfg;
+		}
+		else {
+			blk->bgcolor = blk->bgcolor_old;
+			xcb_change_gc(ya.c, blk->gc, XCB_GC_FOREGROUND, (const uint32_t[]){blk->bgcolor});
+			blk->attr &= ~BLKA_DIRTY_COL;
+			blk->fgcolor = blk->fgcolor_old;
+		}
+#endif
 		sprintf(startstr, "%*.1Lf", space, ya_avg);
 		if(suflen)
 			strcat(blk->buf, blk->internal->suffix);
