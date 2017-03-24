@@ -277,6 +277,7 @@ struct ya_bar {
 
 	uint8_t ulsize; //underline size
 	uint8_t olsize; //overline size
+	uint8_t oosize; //offset size
 	uint8_t slack; //slack size
 
 	uint32_t brcolor; //border color

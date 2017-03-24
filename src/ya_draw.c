@@ -728,7 +728,7 @@ void ya_draw_pango_text(struct ya_block *blk) {
 	pango_layout_set_width(layout, blk->width * PANGO_SCALE);
 	pango_layout_set_wrap(layout, PANGO_WRAP_WORD);
 	pango_layout_set_ellipsize(layout, PANGO_ELLIPSIZE_END);
-	int offset = (blk->bar->height - ht)/2;
+	int offset = (blk->bar->height - ht)/2 + blk->bar->oosize;
 	cairo_move_to(cr, 0, offset);
 	pango_cairo_show_layout(cr, layout);
 	cairo_move_to(cr, 0, offset);
