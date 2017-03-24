@@ -114,6 +114,10 @@ Each bar can have its font, position (currently only top and bottom), background
         underline-size: 2;
         overline-size: 2;
 
+* Offset size: This option defines the text offset size. Default is 0. Example:
+
+        offset-size: 2;
+
 * Slack: You can define the size of the slack (i.e. the unused space between blocks). Default is 0. Example:
 
         slack-size: 2;
