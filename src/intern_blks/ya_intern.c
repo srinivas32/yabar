@@ -560,7 +560,8 @@ void ya_int_volume(ya_block_t *blk) {
 	} else {
 		ya_block_error(blk, "internal-option1 (device) is mandatory");
 	}
-	if( strcmp(blk->internal->option[1], "mapped") == 0 )
+	if( blk->internal->option[1] &&
+        strcmp(blk->internal->option[1], "mapped") == 0 )
 		mapped = true;
 	if( blk->internal->option[2] ) {
 		sscanf(blk->internal->option[2], "%s %s", on, off);
