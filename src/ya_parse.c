@@ -248,7 +248,7 @@ static void ya_setup_bar(config_setting_t * set) {
 		for(char *m = strtok(mon_conf, " "); m != NULL; m = strtok(NULL, " ")) {
 			bar->mon = ya_get_monitor_from_name(m);
 			if(bar->mon != NULL) {
-				printf("Using monitor %s\n", m);
+				fprintf(stderr, "Using monitor %s\n", m);
 				break;
 			}
 		}
