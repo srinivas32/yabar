@@ -59,6 +59,7 @@ static void ya_copy_bar_members(ya_bar_t *dstb, ya_bar_t *srcb) {
 	dstb->desc = srcb->desc;
 	dstb->ulsize = srcb->ulsize;
 	dstb->olsize = srcb->olsize;
+	dstb->oosize = srcb->oosize;
 	dstb->slack = srcb->slack;
 	dstb->brcolor = srcb->brcolor;
 	dstb->brsize = srcb->brsize;
@@ -311,6 +312,10 @@ static void ya_setup_bar(config_setting_t * set) {
 	retcnf = config_setting_lookup_int(set, "overline-size", &retint);
 	if(retcnf == CONFIG_TRUE) {
 		bar->olsize = retint;
+	}
+	retcnf = config_setting_lookup_int(set, "offset-size", &retint);
+	if(retcnf == CONFIG_TRUE) {
+		bar->oosize = retint;
 	}
 	retcnf = config_setting_lookup_int(set, "background-color-argb", &retint);
 	if(retcnf == CONFIG_FALSE) {
