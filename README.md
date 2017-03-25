@@ -15,7 +15,7 @@ Yabar is a modern and lightweight status bar that is intended to be used along w
 
 * Extremely configurable with easy configuration system using a single config file.
 * A growing set of ready-to-use internal blocks developed in plain c.
-* Pango font rendering with support of pango markup language.
+* Pango font rendering with support of [Pango Markup Language](https://developer.gnome.org/pango/stable/PangoMarkupFormat.html).
 * Support for icons and images.
 * Support for transparency.
 * Multi-monitor support using RandR.
