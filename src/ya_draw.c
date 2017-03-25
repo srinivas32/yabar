@@ -730,7 +730,6 @@ void ya_draw_pango_text(struct ya_block *blk) {
 		// create a list of fallback attributes so spaces between font glyphs aren't tofued
 		PangoAttrList *list = pango_layout_get_attributes(layout);
 		if(list == NULL) {
-			printf("No list yet for %s\n", blk->name);
 			list = pango_attr_list_new();
 			pango_layout_set_attributes(layout, list);
 		}
@@ -744,6 +743,8 @@ void ya_draw_pango_text(struct ya_block *blk) {
 				fb->start_index = i;
 				fb->end_index = i + j;
 				pango_attr_list_insert(list, fb);
+				// only needed if order is SYMBOLIC ICON, MONOSPACE
+				/*
 				if(blk->bar->mono_font != NULL) {
 					PangoAttribute *ms =
 						pango_attr_family_new((const char *) blk->bar->mono_font);
@@ -752,6 +753,7 @@ void ya_draw_pango_text(struct ya_block *blk) {
 					ms->end_index = i + j;
 					pango_attr_list_insert(list, ms);
 				}
+				*/
 				i += j - 1;
 			}
 		}

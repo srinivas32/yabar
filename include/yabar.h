@@ -279,7 +279,7 @@ struct ya_bar {
 	uint8_t position; //top, bottom, left or right.
 
 	PangoFontDescription *desc;
-	char *mono_font;
+	//char *mono_font;
 
 	ya_block_t *curblk[3];
 	/* curblk[i] should point to the last added block for each alignment. then

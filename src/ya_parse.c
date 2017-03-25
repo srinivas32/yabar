@@ -217,6 +217,7 @@ static void ya_setup_bar(config_setting_t * set) {
 	}
 	else {
 		bar->desc = pango_font_description_from_string(retstr);
+		/*
 		//get all the font families from desc
 		const char *font_fam = pango_font_description_get_family(bar->desc);
 		PangoFontFamily **families;
@@ -231,6 +232,7 @@ static void ya_setup_bar(config_setting_t * set) {
 			}
 		}
 		g_free(families);
+		*/
 	}
 
 	retcnf = config_setting_lookup_string(set, "position", &retstr);
