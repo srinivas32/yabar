@@ -696,8 +696,8 @@ void ya_draw_pango_text(struct ya_block *blk) {
 
 	cairo_set_source_rgba(cr,
 			GET_RED(blk->fgcolor),
-			GET_BLUE(blk->fgcolor),
 			GET_GREEN(blk->fgcolor),
+			GET_BLUE(blk->fgcolor),
 			GET_ALPHA(blk->fgcolor));
 
 	//fprintf(stderr, "010=%s\n", blk->name);
@@ -737,8 +737,8 @@ void ya_draw_pango_text(struct ya_block *blk) {
 	if(blk->attr & BLKA_OVERLINE) {
 		cairo_set_source_rgba(cr,
 			GET_RED(blk->olcolor),
-			GET_BLUE(blk->olcolor),
 			GET_GREEN(blk->olcolor),
+			GET_BLUE(blk->olcolor),
 			GET_ALPHA(blk->olcolor));
 		cairo_rectangle(cr, 0, 0, blk->width, blk->bar->olsize);
 		cairo_fill(cr);
@@ -747,8 +747,8 @@ void ya_draw_pango_text(struct ya_block *blk) {
 	if(blk->attr & BLKA_UNDERLINE) {
 		cairo_set_source_rgba(cr,
 			GET_RED(blk->ulcolor),
-			GET_BLUE(blk->ulcolor),
 			GET_GREEN(blk->ulcolor),
+			GET_BLUE(blk->ulcolor),
 			GET_ALPHA(blk->ulcolor));
 		cairo_rectangle(cr, 0, blk->bar->height - blk->bar->ulsize, blk->width, blk->bar->ulsize);
 		cairo_fill(cr);

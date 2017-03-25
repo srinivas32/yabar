@@ -54,9 +54,9 @@ extern char *strdup(const char *s); //to suppress implicit decleration warning f
 #define PT1 printf("%d:%s:%s\n", __LINE__, __FUNCTION__, __FILE__)
 
 #define GET_ALPHA(c)	((double)(((c)>>24) & 0xff)/255.0)
-#define GET_RED(c)		((double)(((c)>>16) & 0xff)/255.0)
-#define GET_GREEN(c)	((double)(((c))     & 0xff)/255.0)
-#define GET_BLUE(c)		((double)(((c)>>8)  & 0xff)/255.0)
+#define GET_RED(c)	((double)(((c)>>16) & 0xff)/255.0)
+#define GET_GREEN(c)	((double)(((c)>>8)  & 0xff)/255.0)
+#define GET_BLUE(c)	((double)(((c))     & 0xff)/255.0)
 
 
 #define GET_MIN(A, B) ((A) < (B) ? (A) : (B))
