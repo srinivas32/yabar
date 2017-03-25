@@ -738,17 +738,20 @@ void ya_draw_pango_text(struct ya_block *blk) {
 		for(int i = 0; i < strlen(text); i++) {
 			if(text[i] == ' ') {
 				int j;
-				PangoAttribute *fb = pango_attr_fallback_new(TRUE),
-					*ms = pango_attr_family_new((const char *) blk->bar->mono_font);
-				pango_attribute_init(fb, fb->klass);
-				pango_attribute_init(ms, ms->klass);
-				fb->start_index = i;
-				ms->start_index = i;
 				for(j = 1; text[i+j] == ' '; j++);
+				PangoAttribute *fb = pango_attr_fallback_new(TRUE);
+				pango_attribute_init(fb, fb->klass);
+				fb->start_index = i;
 				fb->end_index = i + j;
-				ms->end_index = i + j;
 				pango_attr_list_insert(list, fb);
-				pango_attr_list_insert(list, ms);
+				if(blk->bar->mono_font != NULL) {
+					PangoAttribute *ms =
+						pango_attr_family_new((const char *) blk->bar->mono_font);
+					pango_attribute_init(ms, ms->klass);
+					ms->start_index = i;
+					ms->end_index = i + j;
+					pango_attr_list_insert(list, ms);
+				}
 				i += j - 1;
 			}
 		}
