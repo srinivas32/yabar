@@ -728,9 +728,15 @@ void ya_draw_pango_text(struct ya_block *blk) {
 #endif
 	if ((blk->bar->attr & BARA_FIX_PANGO)) {
 		// create a list of fallback attributes so spaces between font glyphs aren't tofued
-		PangoAttrList *list = pango_attr_list_new();
-		for(int i = 0; i < strlen(blk->buf); i++) {
-			if((blk->buf)[i] == ' ') {
+		PangoAttrList *list = pango_layout_get_attributes(layout);
+		if(list == NULL) {
+			printf("No list yet for %s\n", blk->name);
+			list = pango_attr_list_new();
+			pango_layout_set_attributes(layout, list);
+		}
+		const char *text = pango_layout_get_text(layout);
+		for(int i = 0; i < strlen(text); i++) {
+			if(text[i] == ' ') {
 				int j;
 				PangoAttribute *fb = pango_attr_fallback_new(TRUE),
 					*ms = pango_attr_family_new((const char *) blk->bar->mono_font);
@@ -738,7 +744,7 @@ void ya_draw_pango_text(struct ya_block *blk) {
 				pango_attribute_init(ms, ms->klass);
 				fb->start_index = i;
 				ms->start_index = i;
-				for(j = 1; (blk->buf)[i+j] == ' '; j++);
+				for(j = 1; text[i+j] == ' '; j++);
 				fb->end_index = i + j;
 				ms->end_index = i + j;
 				pango_attr_list_insert(list, fb);
@@ -746,7 +752,6 @@ void ya_draw_pango_text(struct ya_block *blk) {
 				i += j - 1;
 			}
 		}
-		pango_layout_set_attributes(layout, list);
 	}
 	//printf("Unknown glyph count: %d\n", pango_layout_get_unknown_glyphs_count(layout));
 	//fprintf(stderr, "020=%s\n", blk->name);
