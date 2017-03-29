@@ -659,6 +659,22 @@ void ya_draw_text_var_width(ya_block_t * blk) {
 #endif //YA_VAR_WIDTH
 
 /*
+ * This filters out the underline and background attributes so we can separate them
+ */
+static gboolean filter(PangoAttribute *attribute, gpointer user_data) {
+	switch(attribute->klass->type) {
+		case PANGO_ATTR_UNDERLINE_COLOR:
+		case PANGO_ATTR_UNDERLINE:
+		case PANGO_ATTR_BACKGROUND:
+#if (PANGO_VERSION_MAJOR == 1 && PANGO_VERSION_MINOR >= 38)
+		case PANGO_ATTR_BACKGROUND_ALPHA:
+#endif
+			return true;
+		default:
+			return false;
+	}
+}
+/*
  * Here is how the text buffer of a block is rendered on the screen
  */
 void ya_draw_pango_text(struct ya_block *blk) {
@@ -694,12 +710,6 @@ void ya_draw_pango_text(struct ya_block *blk) {
 	PangoLayout *layout = pango_layout_new(context);
 	pango_layout_set_font_description(layout, blk->bar->desc);
 
-	cairo_set_source_rgba(cr,
-			GET_RED(blk->fgcolor),
-			GET_GREEN(blk->fgcolor),
-			GET_BLUE(blk->fgcolor),
-			GET_ALPHA(blk->fgcolor));
-
 	//fprintf(stderr, "010=%s\n", blk->name);
 #ifdef YA_DYN_COL
 	//Start drawing text at strbuf member, where !Y COLORS Y! config ends.
@@ -730,8 +740,6 @@ void ya_draw_pango_text(struct ya_block *blk) {
 	pango_layout_set_ellipsize(layout, PANGO_ELLIPSIZE_END);
 	int offset = (blk->bar->height - ht)/2 + blk->bar->oosize;
 	cairo_move_to(cr, 0, offset);
-	pango_cairo_show_layout(cr, layout);
-	cairo_move_to(cr, 0, offset);
 
 	//Draw overline if defined
 	if(blk->attr & BLKA_OVERLINE) {
@@ -753,6 +761,75 @@ void ya_draw_pango_text(struct ya_block *blk) {
 		cairo_rectangle(cr, 0, blk->bar->height - blk->bar->ulsize, blk->width, blk->bar->ulsize);
 		cairo_fill(cr);
 	}
+
+	//retrieve list of attributes; we will filter it to look for underline and background attrs
+	//so we can draw it ourselves
+	PangoAttrList *orig = pango_layout_get_attributes(layout), *list;
+	//filtering results in a new list with only the filtered attributes (see filter function)
+	if(orig != NULL && (list = pango_attr_list_filter(orig, filter, NULL)) != NULL) {
+		PangoAttrIterator *it = pango_attr_list_get_iterator(list);
+		do {
+			PangoAttribute *attr;
+			PangoRectangle rect1, rect2;
+			gint start, end;
+			//get the starting and ending byte position for the attribute, and their positional data
+			//note that PangoRectangle units are in Pango units, so we have to divide by PANGO_SCALE
+			pango_attr_iterator_range(it, &start, &end);
+			pango_layout_index_to_pos(layout, start, &rect1);
+			pango_layout_index_to_pos(layout, end, &rect2);
+
+			if((attr = pango_attr_iterator_get(it, PANGO_ATTR_BACKGROUND)) != NULL) {
+				PangoColor color = ((PangoAttrColor *)attr)->color;
+				int alpha = G_MAXUINT16;
+				//bgalpha is only available on Pango >= 1.38, use if specified
+#if (PANGO_VERSION_MAJOR == 1 && PANGO_VERSION_MINOR >= 38)
+				if((attr = pango_attr_iterator_get(it, PANGO_ATTR_BACKGROUND_ALPHA)) != NULL)
+					alpha = ((PangoAttrInt *)attr)->value;
+#endif
+				cairo_set_source_rgba(cr,
+					(double)color.red/G_MAXUINT16,
+					(double)color.green/G_MAXUINT16,
+					(double)color.blue/G_MAXUINT16,
+					(double)alpha/G_MAXUINT16);
+				//create the background rectangle using the starting and ending positions
+				cairo_rectangle(cr, rect1.x/PANGO_SCALE, 0,
+						rect2.x/PANGO_SCALE - rect1.x/PANGO_SCALE, blk->bar->height);
+				cairo_fill(cr);
+			}
+			//make sure that the underline attribute value isn't 0 (there actually is underline)
+			if((attr = pango_attr_iterator_get(it, PANGO_ATTR_UNDERLINE)) != NULL &&
+					((PangoAttrInt *)attr)->value) {
+				//if underline color is specified, set the source to be that color
+				if((attr = pango_attr_iterator_get(it, PANGO_ATTR_UNDERLINE_COLOR)) != NULL)
+					cairo_set_source_rgb(cr,
+						(double)((PangoAttrColor *)attr)->color.red/G_MAXUINT16,
+						(double)((PangoAttrColor *)attr)->color.green/G_MAXUINT16,
+						(double)((PangoAttrColor *)attr)->color.blue/G_MAXUINT16);
+				//if not, use foreground color
+				else
+					cairo_set_source_rgba(cr,
+							GET_RED(blk->fgcolor),
+							GET_GREEN(blk->fgcolor),
+							GET_BLUE(blk->fgcolor),
+							GET_ALPHA(blk->fgcolor));
+				//create the underline rectangle using the starting and ending positions
+				cairo_rectangle(cr, rect1.x/PANGO_SCALE, blk->bar->height - blk->bar->ulsize,
+						rect2.x/PANGO_SCALE - rect1.x/PANGO_SCALE, blk->bar->ulsize);
+				cairo_fill(cr);
+			}
+		} while(pango_attr_iterator_next(it));
+		pango_attr_iterator_destroy(it);
+		pango_attr_list_unref(list);
+	}
+
+	cairo_set_source_rgba(cr,
+			GET_RED(blk->fgcolor),
+			GET_GREEN(blk->fgcolor),
+			GET_BLUE(blk->fgcolor),
+			GET_ALPHA(blk->fgcolor));
+
+	cairo_move_to(cr, 0, offset);
+	pango_cairo_show_layout(cr, layout);
 
 	cairo_surface_flush(surface);
 	xcb_copy_area(ya.c, blk->pixmap, blk->bar->win, blk->gc, 0,0,blk->shift, 0, blk->width, blk->bar->height);
