@@ -50,7 +50,7 @@ struct reserved_blk ya_reserved_blks[YA_INTERNAL_LEN] = {
 
 #include <stdarg.h>
 
-/* generic function to print error messages from blocks */
+/* generic function to print error messages from blocks and exit */
 void ya_block_error(ya_block_t *blk, char *error_msg, ...) {
 	va_list args;
 	if(blk == NULL)
@@ -70,6 +70,23 @@ void ya_block_error(ya_block_t *blk, char *error_msg, ...) {
 	pthread_detach(blk->thread);
 	pthread_exit(NULL);
 }
+
+/* generic function to print warning messages from blocks (non-fatal) */
+void ya_block_warning(ya_block_t *blk, char *error_msg, ...) {
+	va_list args;
+	if(blk == NULL)
+		return;
+
+	fprintf(stderr, "W: %s.%s: ", blk->bar->name, blk->name);
+	va_start(args, error_msg);
+	fprintf(stderr, error_msg, args);
+	va_end(args);
+	fprintf(stderr, "\n");
+
+	fflush(stderr);
+}
+
+
 
 FILE* ya_fopen(char* fpath, ya_block_t *blk) {
 	FILE* tfile = fopen(fpath, "r");
