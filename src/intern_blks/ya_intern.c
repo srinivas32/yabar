@@ -734,12 +734,13 @@ void ya_int_wifi(ya_block_t *blk) {
 
     while(1) {
         if (ya_int_get_wireless_info(&ws, blk->internal->option[0]) || ws.link_qual_max == 0) {
-			ya_block_error(blk, "Failed to retrieve wireless info for device %s", blk->internal->option[0]);
+			ya_block_warning(blk, "Failed to retrieve wireless info for device %s", blk->internal->option[0]);
+			sprintf(startstr, "- (0%%)");
+        } else {
+			sprintf(startstr, "%s (%d%%)", ws.essid, ws.link_qual*100 / ws.link_qual_max);
+			if(suflen)
+				strcat(blk->buf, blk->internal->suffix);
         }
-
-        sprintf(startstr, "%s (%d%%)", ws.essid, ws.link_qual*100 / ws.link_qual_max);
-        if(suflen)
-            strcat(blk->buf, blk->internal->suffix);
 
         ya_draw_pango_text(blk);
         sleep(blk->sleep);
