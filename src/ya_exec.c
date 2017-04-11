@@ -582,6 +582,9 @@ void ya_handle_prop_notify(xcb_property_notify_event_t *ep) {
 	else if ((ep->atom == ya.ewmh->_NET_WM_NAME) || (ep->atom == ya.ewmh->_NET_WM_VISIBLE_NAME)) {
 		//Same window, but title changed. Therefore don't return.
 	}
+	else if (ep->atom == ya.ewmh->_NET_CURRENT_DESKTOP) {
+		//Don't return, needed for workspaces
+	}
 	else {
 		return;
 	}
