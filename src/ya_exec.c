@@ -583,7 +583,8 @@ void ya_handle_prop_notify(xcb_property_notify_event_t *ep) {
 		//Same window, but title changed. Therefore don't return.
 	}
 	else if (ep->atom == ya.ewmh->_NET_CURRENT_DESKTOP) {
-		//Don't return, needed for workspaces
+		xcb_get_property_cookie_t ws_ck = xcb_ewmh_get_current_desktop(ya.ewmh, 0);
+		xcb_ewmh_get_current_desktop_reply(ya.ewmh, ws_ck, &ya.curws, NULL);
 	}
 	else {
 		return;
