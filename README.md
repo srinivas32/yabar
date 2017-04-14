@@ -55,10 +55,16 @@ You can install yabar as follows:
 
 		$ git clone https://github.com/geommer/yabar
 		$ cd yabar
-		$ make
+		$ make yabar
 		$ sudo make install
 
 If you use libconfig 1.4.x (still used in Ubuntu 14.04 and Debian Jessie), please type `export CPPFLAGS=-DOLD_LIBCONFIG` then build using `make` as usual.
+
+Building the documentation (man page) requires AsciiDoc and a few other dependencies: `asciidoc docbook-xml xsltproc`
+
+		$ make docs
+
+This will generate the yabar man page inside `doc/yabar.1`.
 
 ## Configuration
 
