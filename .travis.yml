@@ -15,7 +15,7 @@ addons:
       - libasound2-dev
       - libiw-dev
       - docbook-xml
-      - asciidoc-base
+      - asciidoc
       - xsltproc
 before_install:
     - export CPPFLAGS=-DOLD_LIBCONFIG
