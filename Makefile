@@ -5,6 +5,7 @@ CPPFLAGS += -DVERSION=\"$(VERSION)\" -D_POSIX_C_SOURCE=199309L -DYA_INTERNAL -DY
 CFLAGS += -std=c99 -Iinclude -pedantic -Wall -Os `pkg-config --cflags pango pangocairo libconfig gdk-pixbuf-2.0 alsa`
 LDLIBS += -liw -lxcb -lpthread -lxcb-randr -lxcb-ewmh -lxcb-icccm -lm `pkg-config --libs pango pangocairo libconfig gdk-pixbuf-2.0 alsa`
 PROGRAM := yabar
+DOCS := $(PROGRAM).1
 PREFIX ?= /usr
 BINPREFIX ?= $(PREFIX)/bin
 MANPREFIX ?= $(PREFIX)/share/man
@@ -14,18 +15,21 @@ OBJS := $(OBJS:.c=.o)
 
 %.o: %.c %.h
 	$(CC) $(CFLAGS) -c -o $@ $<
-all: $(PROGRAM)
+all: $(PROGRAM) $(DOCS)
 $(PROGRAM): $(OBJS)
 	$(CC) -o $@ $^ $(LDLIBS)
+docs: $(DOCS)
 install:
 	mkdir -p "$(DESTDIR)$(BINPREFIX)"
 	cp -pf $(PROGRAM) "$(DESTDIR)$(BINPREFIX)"
 	mkdir -p "$(DESTDIR)$(MANPREFIX)"/man1
-	cp -pf doc/yabar.1 "$(DESTDIR)$(MANPREFIX)"/man1
+	cp -pf "doc/$(PROGRAM).1" "$(DESTDIR)$(MANPREFIX)/man1"
 uninstall:
 	rm -f "$(DESTDIR)$(BINPREFIX)/$(PROGRAM)"
-	rm -f "$(DESTDIR)$(MANPREFIX)"/man1/yabar.1
+	rm -f "$(DESTDIR)$(MANPREFIX)/man1/$(PROGRAM).1"
+$(PROGRAM).1: doc/$(PROGRAM).1.asciidoc
+	a2x --doctype manpage --format manpage "doc/$(PROGRAM).1.asciidoc"
 clean:
-	rm -f src/*.o src/intern_blks/*.o $(PROGRAM)
+	rm -f src/*.o src/intern_blks/*.o $(PROGRAM) "doc/$(PROGRAM).1"
 
 .PHONY: all install uninstall clean
