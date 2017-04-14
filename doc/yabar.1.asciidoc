@@ -199,8 +199,8 @@ You can change block colors (background, foreground, underline and overline) wit
 
 If you wish to change one or more of the 4 color types, you must begin your string-to-be-drawn (i.e. the output string to stdout by your shell script) with !Y FORMAT Y!. The FORMAT statement should contain the color type (BG or bg for background, FG or fg for foreground, U or u for underline and O or o for overline). The color must be in hex AARRGGBB (So if you want to add an rgb color just make it FFxxxxxx). Examples:
 ----
-    "!Y BG 0xFFFF0000 fg0xFF00ff00 U0xFFFAC739 Y!"
-    "!Ybg0xff00ff00Y!"
+"!Y BG 0xFFFF0000 fg0xFF00ff00 U0xFFFAC739 Y!"
+"!Ybg0xff00ff00Y!"
 ----
 
 The spaces are just skipped automatically. Keep in mind that You can always dynamically change your foreground color using pango markup too.
@@ -210,9 +210,9 @@ ENVIRONMENT VARIABLES
 Yabar sets a handful of environment variables before executing your commands/scripts that are defined in the command-button{1-5} entry. Such env variables can be useful when drawing your window on the corresponding button press. Current env variables are:
 
 ----
-    $YABAR_BLOCK_X # The beginning x axis for the block
-    $YABAR_BLOCK_Y # It returns just the bottom y value of the block in case of topbar or just the top y value of the block in case of bottombar
-    $YABAR_BLOCK_WIDTH # Block width
+$YABAR_BLOCK_X # The beginning x axis for the block
+$YABAR_BLOCK_Y # It returns just the bottom y value of the block in case of topbar or just the top y value of the block in case of bottombar
+$YABAR_BLOCK_WIDTH # Block width
 ----
 
 INTERNAL BLOCKS
@@ -220,12 +220,12 @@ INTERNAL BLOCKS
 Yabar has several internal blocks written in plain C. This feature is optional and can be disabled before building the code using the compilation conditional flag '-DYA_INTERNAL' in 'Makefile'. Yabar scans the string value in the *exec* entry to check whether it is a reserved internal block or a normal command.
 Internal blocks have 5 additional block-specific options:
 ----
-    internal-prefix  # Inject a string (usually a font icon) before the output string
-    internal-suffix  # Inject a string (usually a font icon) after the output string
-    internal-option1 # block-specific
-    internal-option2 # block-specific
-    internal-option3 # block-specific
-    internal-spacing # takes a true or false value, used to add space pads to prevent uncomfortable numerical values from moving (only useful for monospace fonts!)
+internal-prefix  # Inject a string (usually a font icon) before the output string
+internal-suffix  # Inject a string (usually a font icon) after the output string
+internal-option1 # block-specific
+internal-option2 # block-specific
+internal-option3 # block-specific
+internal-spacing # takes a true or false value, used to add space pads to prevent uncomfortable numerical values from moving (only useful for monospace fonts!)
 ----
 
 Yabar has a growing set of internal blocks. The current blocks are:
