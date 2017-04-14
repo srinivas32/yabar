@@ -1,3 +1,10 @@
+////
+Useful AsciiDoc syntax documentation:
+http://asciidoctor.org/docs/asciidoc-writers-guide/#building-blocks-in-asciidoc
+http://www.methods.co.nz/asciidoc/asciidoc.css-embedded.html#X93
+https://powerman.name/doc/asciidoc
+////
+
 YABAR(1)
 ========
 :doctype: manpage
