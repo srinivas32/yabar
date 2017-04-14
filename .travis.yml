@@ -1,25 +1,28 @@
 sudo: false
 dist: trusty
-language: c
-compiler:
-    - gcc
-addons:
-  apt:
-    packages:
-      - libxcb-randr0-dev
-      - libconfig-dev
-      - libcairo2-dev
-      - libpango1.0-dev
-      - libxcb-ewmh-dev
-      - libxcb-icccm4-dev
-      - libasound2-dev
-      - libiw-dev
-      - docbook-xml
-      - asciidoc
-      - xsltproc
-before_install:
-    - export CPPFLAGS=-DOLD_LIBCONFIG
-script:
-  matrix:
-      - make yabar && make install
-      - make doc && make install
+matrix:
+  include:
+    - script: make yabar
+      compiler: gcc
+      language: c
+      env: CPPFLAGS=-DOLD_LIBCONFIG
+      addons:
+        apt:
+          packages:
+            - libxcb-randr0-dev
+            - libconfig-dev
+            - libcairo2-dev
+            - libpango1.0-dev
+            - libxcb-ewmh-dev
+            - libxcb-icccm4-dev
+            - libasound2-dev
+            - libiw-dev
+    - script: make docs
+      language: generic
+      addons:
+        apt:
+          packages:
+            - docbook-xml
+            - asciidoc
+            - xsltproc
+            - libxml2-utils
