@@ -108,6 +108,11 @@ border-size: 2;
 border-color-rgb: 0xffffff;
 ----
 
+* *No-window-color*: Fallback color for the bar when there is no active window in the current desktop/workspace. Example:
+----
+background-color-nowindow-argb: 0xff430343;
+----
+
 * *Inheritance*: As the config file gets larger because you want to add several bars, you may find yourself adding many identical option values for every added bar. This optional entry is added in order to inherit the options from a precedent bar into your next bar. You can also override the inherited options with new values.
 ----
 # inherit bar-specific options:
@@ -129,7 +134,6 @@ $YABAR_BLOCK_X # The beginning x axis for the block
 $YABAR_BLOCK_Y # It returns just the bottom y value of the block in case of topbar or just the top y value of the block in case of bottombar
 $YABAR_BLOCK_WIDTH # Block width
 ----
-
 
 BLOCK-SPECIFIC OPTIONS
 ----------------------
@@ -187,6 +191,15 @@ command-button4: "pactl set-sink-volume 0 +10%";
 command-button5: "pactl set-sink-volume 0 -10%";
 ----
 
+Yabar sets a handful of environment variables before executing your commands/scripts that are defined in the 'command-button{1-5}' entry. Such env variables can be useful when drawing your window on the corresponding button press or determining where the click occured. Current env variables are:
+----
+$YABAR_BLOCK_X # beginning x axis for the block
+$YABAR_BLOCK_Y # bottom y value of the block in case of topbar or top y value of the block in case of bottombar
+$YABAR_BLOCK_WIDTH # block width
+$YABAR_CLICK_X # x coordinate of the click starting in the top-left corner of the block
+$YABAR_CLICK_Y # y coordinate of the click starting in the top-left corner of the block
+----
+
 * *Inheritance*: As the config gets larger because you want to add many blocks, you may find yourself adding many identical option values for every added block. This optional entry is added in order to inherit the options from a precedent block into your new block. You can also override the inherited options with new values.
 ----
 inherit: "bar1.block1";
@@ -216,7 +229,7 @@ If you wish to change one or more of the 4 color types, you must begin your stri
 "!Ybg0xff00ff00Y!"
 ----
 
-Spaces are skipped automatically. Keep in mind that you can always dynamically change your foreground color using pango markup too.
+Spaces are skipped automatically. Keep in mind that you can always dynamically change your foreground color using pango markup, too.
 
 INTERNAL BLOCKS
 ---------------
@@ -315,17 +328,25 @@ internal-option2: "        "; # icons to indicate quarter, half, 
 internal-suffix: "%";
 ----
 
-* *Volume*: It uses ALSA to display sound volume in percentage. Example:
+* *YABAR_VOLUME* - *Volume*: Uses ALSA to display sound volume in percentage. Example:
 ----
 exec: "YABAR_VOLUME";
 interval: 1;
-internal-option1 : "default"; # device name
-internal-option2 : "Master 0"; # Mixer index (separated by space)
+internal-option1 : "default Master 0"; # device, mixer, index (seperated by space)
+internal-option2 : "mapped"; # 'mapped' will use logarithmic scale (like 'amixer -M' or 'alsamixer')
 internal-option3 : " "; # characters to display when sound is on or off (separated by a space)
 internal-suffix: "%";
 ----
 
-* *Disk space usage*: Display used/total space (e.g. 84G/320G) for one or multiple file systems. Example:
+* *YABAR_WIFI* - *Wifi*: Displays the SSID of the WiFi AP and the strength in percent. Example:
+----
+exec: "YABAR_WIFI";
+internal-option1: "wlan0";
+internal-prefix: " ";
+fixed-size: 150;
+----
+
+* *YABAR_DISKSPACE* - *Disk space usage*: Display used/total space (e.g. 84G/320G) for one or multiple file systems. Example:
 ----
 exec: "YABAR_DISKSPACE";
 align: "right";
