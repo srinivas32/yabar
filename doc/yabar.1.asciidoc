@@ -278,8 +278,8 @@ interval: 60;
 ----
 exec: "YABAR_THERMAL";
 internal-option1: "thermal_zone0";
-internal-option2: "70; 0xFFFFFFFF; 0xFFED303C"; # Critical Temperature, fg, bg
-internal-option3: "58; 0xFFFFFFFF; 0xFFF4A345"; # Warning Temperature, fg, bg
+internal-option2: "70 0xFFFFFFFF 0xFFED303C"; # Critical Temperature, fg, bg
+internal-option3: "58 0xFFFFFFFF 0xFFF4A345"; # Warning Temperature, fg, bg
 interval: 1;
 ----
 
