@@ -1,0 +1,371 @@
+////
+Useful AsciiDoc syntax documentation:
+http://asciidoctor.org/docs/asciidoc-writers-guide/#building-blocks-in-asciidoc
+http://www.methods.co.nz/asciidoc/asciidoc.css-embedded.html#X93
+https://powerman.name/doc/asciidoc
+////
+
+YABAR(1)
+========
+:doctype: manpage
+
+NAME
+----
+yabar - a modern and lightweight status bar for X window managers
+
+SYNOPSIS
+--------
+*yabar* [-c 'CONFIG_FILE'] [-v] [-h]
+
+DESCRIPTION
+-----------
+Yabar is a modern and lightweight status bar that is intended to be used along with minimal X window managers like 'bspwm' and 'i3'. Yabar has the following features:
+
+* Extremely configurable with easy configuration system using a single config file.
+* A growing set of ready-to-use internal blocks developed in plain C.
+* Pango font rendering with support of pango markup language.
+* Support for transparency.
+* Multi-monitor support using RandR.
+* Entirely clickable.
+* Support for several environment variables to help button commands.
+* Multiple bars within the same session.
+
+TERMINOLOGY
+-----------
+A Yabar session should contain one or more *bars* within the same session. Each bar should contain one or more *blocks*. Each block should display some useful info to the user (free memory, CPU temperature, etc...).
+
+CONFIGURATION
+-------------
+Yabar currently by default accepts configuration from the config file '~/.config/yabar/yabar.conf' or using 'yabar -c CONFIG_FILE'. The config file should like something like this:
+
+----
+bar-list: ["bar1", "bar2", ...];
+
+bar1: {
+    //bar-specific options//
+    block-list: ["block1", "block2", ...];
+    block1: {
+        //block-specific options//
+    }
+    block2: {
+        //block-specific options//
+    }
+}
+----
+
+A bar or a block can be named to whatever name (preferably a short and meaningful name). Only names that are included in the "bar-list" and "block-list" entries will be drawn on the screen.
+
+BAR-SPECIFIC OPTIONS
+--------------------
+Each bar can have its own font, position (currently only top and bottom), background color, height, horizontal and vertical gaps, and other options.
+
+* *Font*: accepts a string that contains a font or a list of fonts
+(similar to i3). Example:
+----
+font: "Droid Sans, FontAwesome Bold 9";
+----
+
+* *Position*: position of the bar. Top or bottom are supported. Example:
+----
+position: "top";
+----
+
+* *Gaps*: set the size of horizontal and vertical gaps in pixels. Default is 0. Examples:
+----
+gap-horizontal: 20;
+gap-vertical: 5;
+----
+
+* *Height*: height of the bar. Default is 20 pixels. Example:
+----
+height: 25;
+----
+
+* *Width*: default bar width is 'screen size - 2 * horizontal gap'. However, if this option is used, the bar starts at 'horizontal gap' and ends at 'horizontal gap + width'. Example:
+----
+width: 800;
+----
+
+* *Monitor*: specify the monitor using randr extension for the bar to be drawn on. You can find the name of your monitors using 'xrandr -q' command. The default value (when this option is not provided) is the first active monitor. Multiple fallback monitors can be provided if the first option is unavailable. Example:
+----
+monitor: "LVDS1 VGA1";
+----
+
+* *Underline* and *overline sizes*: set the thickness of underlines and overlines. Default is 0. Example:
+----
+underline-size: 2;
+overline-size: 2;
+----
+
+* *Slack*: set the size of the slack (i.e. the unused space between blocks). Default is 0. Example:
+----
+slack-size: 2;
+----
+
+* *Borders*: optionally define a size and color for a border surrounding the bar. Default is no borders. Example:
+----
+border-size: 2;
+border-color-rgb: 0xffffff;
+----
+
+* *No-window-color*: Fallback color for the bar when there is no active window in the current desktop/workspace. Example:
+----
+background-color-nowindow-argb: 0xff430343;
+----
+
+* *Inheritance*: As the config file gets larger because you want to add several bars, you may find yourself adding many identical option values for every added bar. This optional entry is added in order to inherit the options from a precedent bar into your next bar. You can also override the inherited options with new values.
+----
+# inherit bar-specific options:
+inherit: "bar1";
+# inherit bar-specific options along with all blocks and their options
+inherit-all: "bar1";
+----
+
+* *Button commands*: Yabar already supports mouse button commands for each block. Moreover, yabar seeks to make the entire bar clickable even if the pressed area does not belong to any block or the corresponding button command for that block is not defined. Yabar executes the command inside '/bin/sh'. Example:
+----
+command-button1: "pavucontrol || alsamixer";
+command-button4: "xbacklight -inc 1";
+command-button5: "xbacklight -dec 1";
+----
+
+Yabar sets a handful of environment variables before executing the command that are defined in the 'command-button{1-5}' entry. Such env variables can be useful when drawing your window on the corresponding button press.
+----
+$YABAR_BLOCK_X # The beginning x axis for the block
+$YABAR_BLOCK_Y # It returns just the bottom y value of the block in case of topbar or just the top y value of the block in case of bottombar
+$YABAR_BLOCK_WIDTH # Block width
+----
+
+BLOCK-SPECIFIC OPTIONS
+----------------------
+Each block can have its own command, background, foreground (i.e. font), underline and overline colors, alignment and other options.
+
+* *Execution*: command to be executed or one of Yabar's internal blocks. Yabar consumes the output of the command stdout and displays it on the bar. Example:
+----
+exec: "date +%F";
+----
+
+* *Alignment*: accepts 'left', 'center' or 'right' alignments. Consecutive blocks will be placed to the right of each other. Example:
+----
+align: "right";
+----
+
+* *Justify*: By default, text is centered inside the block size. However, you can optionally justify the text to the left or the right.
+----
+justify: "left";
+----
+
+* *Type*: The block type can be *periodic* where the command is executed within a fixed interval of time, *persistent* where the command runs in a persistent way like 'xtitle' or *once* where the command is executed only once where the intended info should not change like in 'whoami'. Examples:
+----
+type: "periodic";
+type: "persist";
+type: "once";
+----
+
+* *Interval*: interval in seconds for 'periodic' blocks. Example:
+----
+interval: 3;
+----
+
+* *Fixed size*: define the fixed width size of the block. Yabar currently only supports fixed widths. You can deduce the appropriate width using trial and error. The current default value is 80 but you are encouraged to override it to a more appropriate value. Example:
+----
+fixed-size: 90;
+----
+
+* *Pango markup*: en- or disable Pango Markup. Accepts either 'true' or 'false' (without quotes). Default is false. Example:
+----
+pango-markup: true;
+----
+
+* *Colors*: each block has 4 kinds of colors. 'Background', 'foreground' which is the font color when pango markup is not used), 'underline' and 'overline'. Colors are accepted in hex 'RRGGBB' and 'AARRGGBB' representations. The values are integers (without quotes). Examples:
+----
+foreground-color-rgb: 0xeeeeee;
+background-color-argb: 0x1dc93582;
+underline-color-rgb: 0x1d1d1d;
+overline-color-argb: 0xf0642356;
+----
+
+* *Button commands*: This option is used to invoke a command/script upon a mouse button press. You have 5 buttons that usually represent left click, right click, middle click, scroll up and scroll down respectively but this may not be the case for everyone. Commands are executed in '/bin/sh'. Examples:
+----
+command-button1: "pavucontrol || alsamixer";
+command-button4: "pactl set-sink-volume 0 +10%";
+command-button5: "pactl set-sink-volume 0 -10%";
+----
+
+Yabar sets a handful of environment variables before executing your commands/scripts that are defined in the 'command-button{1-5}' entry. Such env variables can be useful when drawing your window on the corresponding button press or determining where the click occured. Current env variables are:
+----
+$YABAR_BLOCK_X # beginning x axis for the block
+$YABAR_BLOCK_Y # bottom y value of the block in case of topbar or top y value of the block in case of bottombar
+$YABAR_BLOCK_WIDTH # block width
+$YABAR_CLICK_X # x coordinate of the click starting in the top-left corner of the block
+$YABAR_CLICK_Y # y coordinate of the click starting in the top-left corner of the block
+----
+
+* *Inheritance*: As the config gets larger because you want to add many blocks, you may find yourself adding many identical option values for every added block. This optional entry is added in order to inherit the options from a precedent block into your new block. You can also override the inherited options with new values.
+----
+inherit: "bar1.block1";
+----
+
+* *Icons* and *images*: Yabar supports drawing icons and images inside blocks using 'gdk-pixbuf' and 'cairo'. The images are drawn before drawing text so they may act as backgrounds if desired. You can control the horizontal and vertical shift and the width and height scale for the image/icon. Example:
+----
+image: "/usr/share/icons/Numix/16/apps/google.svg";
+image-shift-x: 2; # integer value
+image-shift-y: 1; # integer value
+image-scale-width: 0.4; # float value
+image-scale-height: 0.4; # float value
+----
+
+* *Variable width*: Use this optional feature in order to fit the block width into the current text width and subsequently save empty space inside the bar. Example:
+----
+variable-size: true;
+----
+
+DYNAMIC COLORS FOR BLOCKS
+-------------------------
+You can change block colors ('background', 'foreground', 'underline' and 'overline') within runtime. Along with pango markup format, you can fully control how a block looks throughout yabar's session.
+
+If you wish to change one or more of the 4 color types, you must begin your string-to-be-drawn (i.e. the output string to stdout by your shell script) with '!Y FORMAT Y!'. The 'FORMAT' statement should contain the color type ('BG' or 'bg' for background, 'FG' or 'fg' for foreground, 'U' or 'u' for underline and 'O' or 'o' for overline). The color must be in hex 'AARRGGBB' (So if you want to add an RGB color just make it 'FFxxxxxx'). Examples:
+----
+"!Y BG 0xFFFF0000 fg0xFF00ff00 U0xFFFAC739 Y!"
+"!Ybg0xff00ff00Y!"
+----
+
+Spaces are skipped automatically. Keep in mind that you can always dynamically change your foreground color using pango markup, too.
+
+INTERNAL BLOCKS
+---------------
+Yabar has several internal blocks written in plain C. This feature is optional and can be disabled before building the code using the compilation conditional flag '-DYA_INTERNAL' in 'Makefile'. Yabar scans the string value in the *exec* entry to check whether it is a reserved internal block or a normal command.
+
+Internal blocks have 5 additional block-specific options:
+----
+internal-prefix  # Inject a string (usually a font icon) before the output string
+internal-suffix  # Inject a string (usually a font icon) after the output string
+internal-option1 # block-specific
+internal-option2 # block-specific
+internal-option3 # block-specific
+internal-spacing # takes a true or false value, used to add space pads to prevent uncomfortable numerical values from moving (only useful for monospace fonts!)
+----
+
+Yabar has a growing set of internal blocks. The current blocks are:
+
+* *YABAR_DATE* - *Date and time*: You can control the output format using the standard C library format in 'time.h'. Example:
+----
+exec: "YABAR_DATE";
+internal-option1: "%a %d %b, %I:%M"; # Format String
+internal-prefix: " ";
+interval: 1;
+----
+
+* *YABAR_TITLE* - *Window title*: Uses EWMH to show the current window title. Example:
+----
+exec: "YABAR_TITLE";
+fixed-size: 300;
+----
+
+* *YABAR_WORKSPACE* - *Workspace*: Uses EWMH to show the current workspace/desktop. 'internal-option1' represents a series of characters/numbers/names to be used as workspace names (seperated by space). Example:
+----
+exec: "YABAR_WORKSPACE";
+internal-option1: "        ";
+----
+
+* *YABAR_UPTIME* - *Uptime*: displays system uptime in 'hours:minutes' format.
+----
+exec: "YABAR_UPTIME";
+type: "periodic";
+interval: 60;
+----
+
+* *YABAR_THERMAL* - *Thermal*: Reads thermal value in the file '/sys/class/NAME/temp' and divides it by 1000. Optionally define foreground and background colors for warning and critical temperature levels. Example:
+----
+exec: "YABAR_THERMAL";
+internal-option1: "thermal_zone0";
+internal-option2: "70 0xFFFFFFFF 0xFFED303C"; # Critical Temperature, fg, bg
+internal-option3: "58 0xFFFFFFFF 0xFFF4A345"; # Warning Temperature, fg, bg
+interval: 1;
+----
+
+* *YABAR_BRIGHTNESS* - *Brightness*: Reads the current brightness from '/sys/class/backlight/NAME/brightness'. Example:
+----
+exec: "YABAR_BRIGHTNESS";
+internal-option1: "intel_backlight";
+interval: 1;
+----
+
+* *YABAR_BANDWDITH* - *Network bandwidth*: Reads the total transmitted and received bytes in the files '/sys/class/net/NAME/statistics/tx_bytes' and '/sys/class/net/NAME/statistics/rx_bytes' and converts them to rates. Example:
+----
+exec: "YABAR_BANDWIDTH";
+internal-option1: "default"; # Possible values are 'default' or any interface name (e.g. 'eth0', 'wlan1')
+internal-option2: " "; # Two Strings (usually 2 font icons) to be injected before down/up values
+interval: 2;
+----
+
+* *YABAR_MEMORY* - *RAM Usage*: Reads the file '/proc/meminfo' and computes the total used memory. Example:
+----
+exec: "YABAR_MEMORY";
+interval: 1;
+----
+
+* *YABAR_CPU* - *CPU total load*: Reads the file '/proc/stat' and computes the total load percentage: Example:
+----
+exec: "YABAR_CPU";
+interval: 2;
+internal-prefix: " ";
+internal-suffix: "%";
+----
+
+* *YABAR_DISKIO* - *Disk IO activity*: Reads the file '/sys/class/block/NAME/stat' and computes the read and write rates. Example:
+----
+exec: "YABAR_DISKIO";
+internal-option1: "sda";
+internal-option2: " "; # Two Strings (usually 2 font icons) to be injected before down/up values
+interval: 1;
+----
+
+* *YABAR_BATTERY* - *Battery*: Reads the files '/sys/class/power_supply/NAME/capacity' and '/sys/class/power_supply/NAME/status' and extracts the capacity value. Example:
+----
+exec: "YABAR_BATTERY";
+internal-option1: "BAT0";
+internal-option2: "        "; # icons to indicate quarter, half, three-quarters, full and charging state
+internal-suffix: "%";
+----
+
+* *YABAR_VOLUME* - *Volume*: Uses ALSA to display sound volume in percentage. Example:
+----
+exec: "YABAR_VOLUME";
+interval: 1;
+internal-option1 : "default Master 0"; # device, mixer, index (seperated by space)
+internal-option2 : "mapped"; # 'mapped' will use logarithmic scale (like 'amixer -M' or 'alsamixer')
+internal-option3 : " "; # characters to display when sound is on or off (separated by a space)
+internal-suffix: "%";
+----
+
+* *YABAR_WIFI* - *Wifi*: Displays the SSID of the WiFi AP and the strength in percent. Example:
+----
+exec: "YABAR_WIFI";
+internal-option1: "wlan0";
+internal-prefix: " ";
+fixed-size: 150;
+----
+
+* *YABAR_DISKSPACE* - *Disk space usage*: Display used/total space (e.g. 84G/320G) for one or multiple file systems. Example:
+----
+exec: "YABAR_DISKSPACE";
+align: "right";
+interval: 10;
+internal-prefix: " ";
+internal-option1: "/dev/sda";
+----
+
+*internal-option1* is used to match the first column of '/etc/mtab' so there are multiple cases:
+
+** "/dev/sda1"           first partition of device sda
+** "/dev/sdb"            all mounted partitions of device sdb
+** "/dev/mapper/vgc-"    all mounted logical volumes of volume group vgc
+** "/dev"                all mounted partitions / logical volumes
+
+LICENSE
+-------
+Yabar is licensed under the *MIT license*. For more info check out the file 'LICENSE'.
+
+AUTHORS
+------
+George Badawi et al. For more information see the 'CONTRIBUTORS' file.
