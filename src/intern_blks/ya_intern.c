@@ -116,7 +116,7 @@ int ya_fscanf(char* fpath, ya_block_t *blk, char *fmt, ...) {
 	return ret;
 }
 
-inline void ya_setup_prefix_suffix(ya_block_t *blk, size_t * prflen, size_t *suflen, char **startstr) {
+__attribute__ ((gnu_inline)) inline void ya_setup_prefix_suffix(ya_block_t *blk, size_t * prflen, size_t *suflen, char **startstr) {
 	if(blk->internal->prefix) {
 		*prflen = strlen(blk->internal->prefix);
 		if(*prflen) {
