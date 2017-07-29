@@ -544,8 +544,11 @@ void ya_int_battery(ya_block_t *blk) {
 			strcpy(startstr, bat_50str);
 		else if(bat <= 75)
 			strcpy(startstr, bat_75str);
-		else
+		else {
 			strcpy(startstr, bat_100str);
+			if(bat > 100)
+				bat = 100;
+		}
 		if(stat == 'C' && blk->internal->option[1])
 			strcat(strcat(startstr, " "), bat_chargestr);
 		sprintf(startstr+strlen(startstr), "%*d", space, bat);
