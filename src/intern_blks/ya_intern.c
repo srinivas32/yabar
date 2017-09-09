@@ -753,7 +753,7 @@ void ya_int_wifi(ya_block_t *blk) {
 
 
 /* -- Disk usage block -- */
-static const char const symbols[5] = {0, 'K', 'M', 'G', 'T'};
+static const char symbols[5] = {0, 'K', 'M', 'G', 'T'};
 //bytes to human-readable str: convert an amount of bytes to a string with the
 //corresponding suffix. e.g. "123456789" -> "117.7M" (bytes)
 
