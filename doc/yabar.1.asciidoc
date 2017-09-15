@@ -328,6 +328,12 @@ internal-option2: "        "; # icons to indicate quarter, half, 
 internal-suffix: "%";
 ----
 
+* *YABAR_SONG* - *Current Song*: Uses 'playerctl' to retrieve the name of the currently played song. Example:
+----
+exec: "YABAR_SONG";
+internal-option1: "spotify";
+----
+
 * *YABAR_VOLUME* - *Volume*: Uses ALSA to display sound volume in percentage. Example:
 ----
 exec: "YABAR_VOLUME";
