@@ -551,6 +551,7 @@ void ya_int_battery(ya_block_t *blk) {
 		}
 		if(stat == 'C' && blk->internal->option[1])
 			strcat(strcat(startstr, " "), bat_chargestr);
+		strcat(startstr, " ");
 		sprintf(startstr+strlen(startstr), "%*d", space, bat);
 		if(suflen)
 			strcat(blk->buf, blk->internal->suffix);
