@@ -22,10 +22,15 @@ void ya_int_battery(ya_block_t *blk);
 void ya_int_volume(ya_block_t *blk);
 void ya_int_wifi(ya_block_t *blk);
 void ya_int_diskspace(ya_block_t *blk);
+
+#ifdef PLAYERCTL
 void ya_int_song(ya_block_t *blk);
+#endif
 
 struct reserved_blk ya_reserved_blks[YA_INTERNAL_LEN] = {
+#ifdef PLAYERCTL
 	{"YABAR_SONG", ya_int_song},
+#endif
 	{"YABAR_DATE", ya_int_date},
 	{"YABAR_UPTIME", ya_int_uptime},
 	{"YABAR_THERMAL", ya_int_thermal},
@@ -131,6 +136,7 @@ __attribute__ ((gnu_inline)) inline void ya_setup_prefix_suffix(ya_block_t *blk,
 	}
 }
 
+#ifdef PLAYERCTL
 #include <playerctl/playerctl.h>
 #define CHECK_PLAYER_ERROR(PREFIX) \
 	if (PREFIX) \
@@ -190,6 +196,7 @@ void ya_int_song(ya_block_t *blk) {
 		sleep(blk->sleep);
 	}
 }
+#endif
 
 #include <time.h>
 void ya_int_date(ya_block_t * blk) {

@@ -3,8 +3,16 @@ CPPFLAGS += -DVERSION=\"$(VERSION)\" -D_POSIX_C_SOURCE=199309L -DYA_INTERNAL -DY
 			-DYA_ENV_VARS -DYA_INTERNAL_EWMH -DYA_ICON -DYA_NOWIN_COL -DYA_MUTEX -DYA_VAR_WIDTH \
 			-DYA_BSPWM
 CFLAGS += -std=c99 -Iinclude -pedantic -Wall -flto -O2 `pkg-config --cflags pango pangocairo libconfig gdk-pixbuf-2.0 alsa`
+
+DEPS += pango pangocairo libconfig gdk-pixbuf-2.0 alsa
+ifdef PLAYERCTL
+CFLAGS += -DPLAYERCTL
+CPPFLAGS += -DPLAYERCTL
+DEPS += playerctl-1.0
+endif
+
 LDFLAGS += -flto -O2
-LDLIBS += -liw -lxcb -lpthread -lxcb-randr -lxcb-ewmh -lxcb-icccm -lm `pkg-config --libs pango pangocairo libconfig gdk-pixbuf-2.0 alsa playerctl-1.0`
+LDLIBS += -liw -lxcb -lpthread -lxcb-randr -lxcb-ewmh -lxcb-icccm -lm `pkg-config --libs $(DEPS)`
 PROGRAM := yabar
 DOCS := $(PROGRAM).1
 PREFIX ?= /usr
