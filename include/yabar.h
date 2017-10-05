@@ -119,9 +119,17 @@ enum {
 
 
 #ifdef YA_INTERNAL_EWMH
+#ifdef PLAYERCTL
+#define YA_INTERNAL_LEN 17
+#else
 #define YA_INTERNAL_LEN 16
+#endif
+#else
+#ifdef PLAYERCTL
+#define YA_INTERNAL_LEN 15
 #else
 #define YA_INTERNAL_LEN 14
+#endif
 #endif
 enum {
 	YA_INT_DATE = 0,
@@ -139,7 +147,8 @@ enum {
 	YA_INT_WIFI,
 	YA_INT_DISKSPACE,
 	YA_INT_TITLE,
-	YA_INT_WORKSPACE
+	YA_INT_WORKSPACE,
+	YA_INT_SONG
 };
 
 #define NOT_INHERIT_BAR(bar) (((bar)->attr & BARA_INHERIT)==0)
