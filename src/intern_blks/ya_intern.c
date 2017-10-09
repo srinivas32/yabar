@@ -23,7 +23,14 @@ void ya_int_volume(ya_block_t *blk);
 void ya_int_wifi(ya_block_t *blk);
 void ya_int_diskspace(ya_block_t *blk);
 
+#ifdef PLAYERCTL
+void ya_int_song(ya_block_t *blk);
+#endif
+
 struct reserved_blk ya_reserved_blks[YA_INTERNAL_LEN] = {
+#ifdef PLAYERCTL
+	{"YABAR_SONG", ya_int_song},
+#endif
 	{"YABAR_DATE", ya_int_date},
 	{"YABAR_UPTIME", ya_int_uptime},
 	{"YABAR_THERMAL", ya_int_thermal},
@@ -128,6 +135,68 @@ __attribute__ ((gnu_inline)) inline void ya_setup_prefix_suffix(ya_block_t *blk,
 		*suflen = strlen(blk->internal->suffix);
 	}
 }
+
+#ifdef PLAYERCTL
+#include <playerctl/playerctl.h>
+#define CHECK_PLAYER_ERROR(PREFIX) \
+	if (PREFIX) \
+		ya_block_error(blk, "Player error!");
+
+#define PRINT_PAUSED_MSG() \
+	sprintf(startstr,"%s",blk->internal->option[2]);
+
+void ya_int_song(ya_block_t *blk) {
+	char *startstr = blk->buf;
+	size_t prflen = 0,suflen = 0;
+	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
+
+	GError *e_tmp, *e_title, *e_artist;
+	PlayerctlPlayer *player;
+	gchar *s;
+
+	if (blk->internal->option[0]==NULL)
+		ya_block_error(blk, "Please set option0 for playerctl (e.g. spotify)!");
+	if (blk->internal->option[1]==NULL)
+		blk->internal->option[1] = " - ";
+	if (blk->internal->option[2]==NULL)
+		blk->internal->option[2] = "Paused";
+
+	while (1) {
+		player = playerctl_player_new(blk->internal->option[0], &e_tmp);
+		g_object_get(player, "status", &s, NULL);
+
+		if (s == NULL) {
+			PRINT_PAUSED_MSG();
+			continue;
+		}
+		if (strcmp("Playing", s) == 0) {
+			CHECK_PLAYER_ERROR(e_tmp);
+
+			sprintf(
+				startstr,
+				"%s %s %s",
+				playerctl_player_get_artist(player, &e_artist),
+				blk->internal->option[1],
+				playerctl_player_get_title(player, &e_title)
+			);
+
+			CHECK_PLAYER_ERROR(e_title);
+			CHECK_PLAYER_ERROR(e_artist);
+		} else {
+			PRINT_PAUSED_MSG();
+		}
+
+		if(suflen)
+			strcat(blk->buf, blk->internal->suffix);
+
+		g_free(s);
+		g_object_unref(player);
+
+		ya_draw_pango_text(blk);
+		sleep(blk->sleep);
+	}
+}
+#endif
 
 #include <time.h>
 void ya_int_date(ya_block_t * blk) {
