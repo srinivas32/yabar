@@ -5,5 +5,6 @@ with import <nixpkgs>{}; stdenv.mkDerivation {
   buildInputs = [
     cairo gdk_pixbuf libconfig pango pkgconfig xorg.xcbutilwm docbook_xsl
     alsaLib wirelesstools asciidoc libxslt makeWrapper libxml2 playerctl
+    libxkbcommon
   ];
 }

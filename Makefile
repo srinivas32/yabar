@@ -12,7 +12,7 @@ DEPS += playerctl-1.0
 endif
 
 LDFLAGS += -flto -O2
-LDLIBS += -liw -lxcb -lpthread -lxcb-randr -lxcb-ewmh -lxcb-icccm -lm `pkg-config --libs $(DEPS)`
+LDLIBS += -liw -lxcb -lpthread -lxcb-randr -lxcb-ewmh -lxcb-icccm -lxkbcommon -lxkbcommon-x11 -lxcb-xkb -lm `pkg-config --libs $(DEPS)`
 PROGRAM := yabar
 DOCS := $(PROGRAM).1
 PREFIX ?= /usr

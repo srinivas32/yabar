@@ -368,6 +368,11 @@ internal-option1: "/dev/sda";
 ** "/dev/mapper/vgc-"    all mounted logical volumes of volume group vgc
 ** "/dev"                all mounted partitions / logical volumes
 
+* *YABAR_KEYBOARD_LAYOUT* - *XKB layout*: Retrieves the uppercased layout string from libxkb. Example:
+---
+exec: "YABAR_KEYBOARD_LAYOUT";
+---
+
 LICENSE
 -------
 Yabar is licensed under the *MIT license*. For more info check out the file 'LICENSE'.
