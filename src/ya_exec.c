@@ -18,7 +18,7 @@ static const char * const yashell = "/bin/sh";
 inline static void ya_copy_buf_from_index(ya_block_t *blk, uint32_t cur_desktop) {
 	char *cur = blk->internal->option[0];
 	uint32_t index =0;
-	for(;*cur!= '\0' && *cur == ' ';cur++);
+	for(;*cur == ' ';cur++);
 	for(;*cur != '\0'; cur++) {
 		int offset = 0;
 		if(*cur==' ')
