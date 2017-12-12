@@ -39,7 +39,10 @@ AUR: [yabar](https://aur.archlinux.org/packages/yabar/) and [yabar-git](https://
 
 #### Debian
 
-[yabar](https://packages.debian.org/search?keywords=yabar) in [Testing (Stretch)](https://packages.debian.org/stretch/yabar) and [Unstable (Sid)](https://packages.debian.org/sid/yabar)
+Yabar is available in the official repositories since Debian Stretch (9.0):
+```sh
+# apt install yabar
+```
 
 #### Ubuntu
 
