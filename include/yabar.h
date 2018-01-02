@@ -120,15 +120,15 @@ enum {
 
 #ifdef YA_INTERNAL_EWMH
 #ifdef PLAYERCTL
-#define YA_INTERNAL_LEN 17
+#define YA_INTERNAL_LEN 18
 #else
-#define YA_INTERNAL_LEN 16
+#define YA_INTERNAL_LEN 17
 #endif
 #else
 #ifdef PLAYERCTL
-#define YA_INTERNAL_LEN 15
+#define YA_INTERNAL_LEN 16
 #else
-#define YA_INTERNAL_LEN 14
+#define YA_INTERNAL_LEN 15
 #endif
 #endif
 enum {
@@ -146,6 +146,7 @@ enum {
 	YA_INT_VOLUME,
 	YA_INT_WIFI,
 	YA_INT_DISKSPACE,
+	YA_INT_KEYBOARD_LAYOUT,
 #ifdef PLAYERCTL
 	YA_INT_SONG,
 #endif

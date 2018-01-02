@@ -22,6 +22,7 @@ void ya_int_battery(ya_block_t *blk);
 void ya_int_volume(ya_block_t *blk);
 void ya_int_wifi(ya_block_t *blk);
 void ya_int_diskspace(ya_block_t *blk);
+void ya_int_keyboard_layout(ya_block_t *blk);
 
 #ifdef PLAYERCTL
 void ya_int_song(ya_block_t *blk);
@@ -45,6 +46,7 @@ struct reserved_blk ya_reserved_blks[YA_INTERNAL_LEN] = {
 	{"YABAR_VOLUME", ya_int_volume},
 	{"YABAR_WIFI", ya_int_wifi},
 	{"YABAR_DISKSPACE", ya_int_diskspace},
+	{"YABAR_KEYBOARD_LAYOUT", ya_int_keyboard_layout},
 #ifdef YA_INTERNAL_EWMH
 	{"YABAR_TITLE", NULL},
 	{"YABAR_WORKSPACE", NULL}
@@ -133,6 +135,59 @@ __attribute__ ((gnu_inline)) inline void ya_setup_prefix_suffix(ya_block_t *blk,
 	}
 	if(blk->internal->suffix) {
 		*suflen = strlen(blk->internal->suffix);
+	}
+}
+
+#include <xkbcommon/xkbcommon.h>
+#include <xkbcommon/xkbcommon-x11.h>
+#include <xcb/xkb.h>
+
+void ya_int_keyboard_layout(ya_block_t *blk) {
+	char *startstr = blk->buf;
+	size_t prflen = 0, suflen = 0;
+	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
+
+	struct xkb_keymap *keymap;
+	struct xkb_state *state;
+	int32_t device_id;
+	struct xkb_context *ctx;
+	const char* name;
+	xkb_layout_index_t layout;
+
+	static uint8_t xkb_base_event;
+	static uint8_t xkb_base_error;
+
+	int ret = xkb_x11_setup_xkb_extension(
+		ya.c,
+		XKB_X11_MIN_MAJOR_XKB_VERSION,
+		XKB_X11_MIN_MINOR_XKB_VERSION,
+		0,
+		NULL,
+		NULL,
+		&xkb_base_event,
+		&xkb_base_error);
+	if (!ret)
+		ya_block_error(blk, "Unable to register XKB extension!");
+
+	ctx = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+	if (!ctx) ya_block_error(blk, "Cannot create new XCB context!");
+	device_id = xkb_x11_get_core_keyboard_device_id(ya.c);
+	if (device_id == -1) ya_block_error(blk, "Empty reply, cannot get device id!");
+
+	while (1) {
+		keymap = xkb_x11_keymap_new_from_device(ctx, ya.c, device_id, XKB_KEYMAP_COMPILE_NO_FLAGS);
+		if (!keymap) ya_block_error(blk, "Cannot find keymap!");
+		state = xkb_state_new(keymap);
+
+		layout = xkb_state_serialize_layout(state, XKB_STATE_LAYOUT_EFFECTIVE);
+		name = xkb_keymap_layout_get_name(keymap, layout);
+		sprintf(startstr, "%s", name);
+
+		xkb_state_unref(state);
+		xkb_keymap_unref(keymap);
+
+		ya_draw_pango_text(blk);
+		sleep(blk->sleep);
 	}
 }
 
