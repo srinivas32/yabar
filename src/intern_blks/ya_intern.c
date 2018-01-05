@@ -198,23 +198,38 @@ void ya_int_keyboard_layout(ya_block_t *blk) {
 		ya_block_error(blk, "Player error!");
 
 #define PRINT_PAUSED_MSG() \
-	sprintf(startstr,"%s",blk->internal->option[2]);
+	sprintf(startstr,"%s",blk->internal->option[1]);
+
+#define CAT_PROP(VALUE) \
+	if (VALUE[0] != '\0') { \
+		if (strcmp(VALUE, "album")==0) strcat(startstr, playerctl_player_get_album(player, &e_generic)); \
+		else if (strcmp(VALUE, "title")==0) strcat(startstr, playerctl_player_get_title(player, &e_generic)); \
+		else if (strcmp(VALUE, "artist")==0) strcat(startstr, playerctl_player_get_artist(player, &e_generic)); \
+		else ya_block_error(blk, "Invalid attribute for playerctl (allowed: artist, album, title)"); \
+	}
+
+#define IS_EMPTY(VAR) strcmp(VAR, "")==0
 
 void ya_int_song(ya_block_t *blk) {
 	char *startstr = blk->buf;
 	size_t prflen = 0,suflen = 0;
 	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
 
-	GError *e_tmp, *e_title, *e_artist;
+	GError *e_tmp, *e_generic;
 	PlayerctlPlayer *player;
 	gchar *s;
 
 	if (blk->internal->option[0]==NULL)
 		ya_block_error(blk, "Please set option0 for playerctl (e.g. spotify)!");
 	if (blk->internal->option[1]==NULL)
-		blk->internal->option[1] = " - ";
+		blk->internal->option[1] = "Paused";
+
+	char one[8], two[8], three[8];
 	if (blk->internal->option[2]==NULL)
-		blk->internal->option[2] = "Paused";
+		blk->internal->option[2] = "title";
+
+	if (sscanf(blk->internal->option[2], "%s %s %s", one, two, three) == 0)
+		ya_block_warning(blk, "no matches found!");
 
 	while (1) {
 		player = playerctl_player_new(blk->internal->option[0], &e_tmp);
@@ -226,17 +241,13 @@ void ya_int_song(ya_block_t *blk) {
 		}
 		if (strcmp("Playing", s) == 0) {
 			CHECK_PLAYER_ERROR(e_tmp);
+			startstr[0] = 0;
 
-			sprintf(
-				startstr,
-				"%s %s %s",
-				playerctl_player_get_artist(player, &e_artist),
-				blk->internal->option[1],
-				playerctl_player_get_title(player, &e_title)
-			);
-
-			CHECK_PLAYER_ERROR(e_title);
-			CHECK_PLAYER_ERROR(e_artist);
+			CAT_PROP(one);
+			if (!IS_EMPTY(two)) strcat(startstr, " - ");
+			CAT_PROP(two);
+			if (!IS_EMPTY(three)) strcat(startstr, " - ");
+			CAT_PROP(three);
 		} else {
 			PRINT_PAUSED_MSG();
 		}
@@ -245,6 +256,8 @@ void ya_int_song(ya_block_t *blk) {
 			strcat(blk->buf, blk->internal->suffix);
 
 		g_free(s);
+		g_free(e_tmp);
+		g_free(e_generic);
 		g_object_unref(player);
 
 		ya_draw_pango_text(blk);
