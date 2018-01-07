@@ -48,6 +48,16 @@ Yabar is available in the official repositories since Debian Stretch (9.0):
 
 [yabar](http://packages.ubuntu.com/search?keywords=yabar&searchon=names&suite=all&section=all) in [Yakkety Yak](http://packages.ubuntu.com/yakkety/yabar)
 
+#### NixOS / Nix
+
+[yabar](https://nixos.org/nixos/packages.html#yabar) is available in the official `nixpkgs` package set and can be installed easily:
+
+```sh
+nix-env -iA nixos.yabar
+```
+
+Since NixOS 18.03 (Impala) there's a [yabar-unstable](https://github.com/NixOS/nixpkgs/blob/master/pkgs/applications/window-managers/yabar/unstable.nix) package which is built from the latest master.
+
 ### From Source
 Yabar initially requires a C compiler (e.g. gcc or clang), make as well as the libraries libconfig, cairo, pango and alsa. The feature `DYA_INTERNAL_EWMH` in `Makefile` additionaly xcb-ewmh (or xcb-util-wm in some distros) and the feature `-DYA_ICON` requires gdk-pixbuf2. These dependencies can be installed through your distribution's package manager:
 
