@@ -332,6 +332,8 @@ internal-suffix: "%";
 ----
 exec: "YABAR_SONG";
 internal-option1: "spotify";
+internal-option2: "Paused";
+internal-option3: "title artist album";
 ----
 
 * *YABAR_VOLUME* - *Volume*: Uses ALSA to display sound volume in percentage. Example:
