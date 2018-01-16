@@ -225,16 +225,17 @@ void ya_buf_color_parse(ya_block_t *blk) {
 	char *cur = blk->buf;
 	char *end;
 	int offset = 0;
+	// reset colors
+	blk->bgcolor = blk->bgcolor_old;
+	blk->fgcolor = blk->fgcolor_old;
+	blk->ulcolor = blk->ulcolor_old;
+	blk->olcolor = blk->olcolor_old;
+	blk->attr &= ~BLKA_DIRTY_COL;
 	if(cur[0] != '!' && cur[1] != 'Y') {
 		blk->strbuf = cur;
 		//pthread_mutex_lock(&blk->mutex);
-		blk->attr &= ~BLKA_DIRTY_COL;
-		blk->bgcolor = blk->bgcolor_old;
 		xcb_change_gc(ya.c, blk->gc, XCB_GC_FOREGROUND, (const uint32_t[]){blk->bgcolor});
 		//pthread_mutex_unlock(&blk->mutex);
-		blk->fgcolor = blk->fgcolor_old;
-		blk->ulcolor = blk->ulcolor_old;
-		blk->olcolor = blk->olcolor_old;
 		return;
 	}
 	cur+=2;
@@ -244,7 +245,6 @@ void ya_buf_color_parse(ya_block_t *blk) {
 			cur+=2;
 			offset+=2;
 			blk->bgcolor = strtoul(cur, &end, 16);
-			xcb_change_gc(ya.c, blk->gc, XCB_GC_FOREGROUND, (const uint32_t[]){blk->bgcolor});
 			blk->attr |= BLKA_DIRTY_COL;
 			offset+=(end-cur);
 		}
@@ -273,6 +273,7 @@ void ya_buf_color_parse(ya_block_t *blk) {
 	if(cur[0]=='Y' && cur[1]=='!') {
 		blk->strbuf =  blk->buf+offset+2;
 	}
+	xcb_change_gc(ya.c, blk->gc, XCB_GC_FOREGROUND, (const uint32_t[]){blk->bgcolor});
 }
 #endif //YA_DYN_COL
 
