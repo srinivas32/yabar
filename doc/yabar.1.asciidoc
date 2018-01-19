@@ -261,7 +261,7 @@ exec: "YABAR_TITLE";
 fixed-size: 300;
 ----
 
-* *YABAR_WORKSPACE* - *Workspace*: Uses EWMH to show the current workspace/desktop. 'internal-option1' represents a series of characters/numbers/names to be used as workspace names (seperated by space). Example:
+* *YABAR_WORKSPACE* - *Workspace*: Uses EWMH to show the current workspace/desktop. 'internal-option1' represents a series of characters/numbers/names to be used as workspace names (seperated by space). If you want to have spaces in the names that are displayed, insert an alternative unicode spacing character (such as U+2000) instead of a regular space. Example:
 ----
 exec: "YABAR_WORKSPACE";
 internal-option1: "        ";
