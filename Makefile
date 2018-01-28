@@ -2,7 +2,6 @@ VERSION ?= $(shell git describe)
 CPPFLAGS += -DVERSION=\"$(VERSION)\" -D_POSIX_C_SOURCE=199309L -DYA_INTERNAL -DYA_DYN_COL \
 			-DYA_ENV_VARS -DYA_INTERNAL_EWMH -DYA_ICON -DYA_NOWIN_COL -DYA_MUTEX -DYA_VAR_WIDTH \
 			-DYA_BSPWM
-<<<<<<< HEAD
 CFLAGS += -std=c99 -Iinclude -pedantic -Wall -flto -O2 `pkg-config --cflags pango pangocairo libconfig gdk-pixbuf-2.0 alsa`
 
 DEPS += pango pangocairo libconfig gdk-pixbuf-2.0 alsa
@@ -14,10 +13,6 @@ endif
 
 LDFLAGS += -flto -O2
 LDLIBS += -liw -lxcb -lpthread -lxcb-randr -lxcb-ewmh -lxcb-icccm -lxkbcommon -lxkbcommon-x11 -lxcb-xkb -lm `pkg-config --libs $(DEPS)`
-=======
-CFLAGS += -std=c99 -Iinclude -pedantic -Wall -Os `pkg-config --cflags pango pangocairo libconfig gdk-pixbuf-2.0 alsa`
-LDLIBS += -liw -lxcb -lpthread -lxcb-randr -lxcb-ewmh -lxcb-icccm -lm `pkg-config --libs pango pangocairo libconfig gdk-pixbuf-2.0 alsa`
->>>>>>> remove monospace, add to readme
 PROGRAM := yabar
 DOCS := $(PROGRAM).1
 PREFIX ?= /usr

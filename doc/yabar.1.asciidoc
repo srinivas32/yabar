@@ -191,6 +191,11 @@ command-button4: "pactl set-sink-volume 0 +10%";
 command-button5: "pactl set-sink-volume 0 -10%";
 ----
 
+* *Pango fix*: When using some symbolic fonts, there can be occasional issues where space characters become unknown glyphs. This fix makes Pango use fallbacks properly (NOTE: the regular font should be specified first, then the symbolic font as shown in the Font section). Example:
+----
+fix-pango: true;
+----
+
 Yabar sets a handful of environment variables before executing your commands/scripts that are defined in the 'command-button{1-5}' entry. Such env variables can be useful when drawing your window on the corresponding button press or determining where the click occured. Current env variables are:
 ----
 $YABAR_BLOCK_X # beginning x axis for the block
