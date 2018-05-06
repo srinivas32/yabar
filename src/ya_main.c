@@ -50,4 +50,6 @@ int main (int argc, char * argv[]) {
 	}
 	//shouldn't get here
 	xcb_disconnect(ya.c);
+	
+	return EXIT_SUCCESS;
 }
