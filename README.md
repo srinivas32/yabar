@@ -61,7 +61,7 @@ Since NixOS 18.03 (Impala) there's a [yabar-unstable](https://github.com/NixOS/n
 ### From Source
 Yabar initially requires a C compiler (e.g. gcc or clang), make as well as the libraries libconfig, cairo, pango and alsa. The feature `DYA_INTERNAL_EWMH` in `Makefile` additionaly xcb-ewmh (or xcb-util-wm in some distros) and the feature `-DYA_ICON` requires gdk-pixbuf2. These dependencies can be installed through your distribution's package manager:
 
-* Fedora: `dnf install libconfig-devel cairo-devel pango-devel gdk-pixbuf2-devel alsa-lib-devel xcb-util-wm-devel wireless-tools-devel libxkbcommon-devel libxkbcommon-x11-devel`
+* Fedora: `dnf install libconfig-devel cairo-devel pango-devel gdk-pixbuf2-devel alsa-lib-devel xcb-util-wm-devel wireless-tools-devel libxkbcommon-devel libxkbcommon-x11-devel asciidoc`
 * Debian / Ubuntu: `apt-get install libcairo2-dev libpango1.0-dev libconfig-dev libxcb-randr0-dev libxcb-ewmh-dev libxcb-icccm4-dev libgdk-pixbuf2.0-dev libasound2-dev libiw-dev libxkbcommon-dev libxkbcommon-x11-dev libxcb-xkb-dev`
 
 You can install yabar as follows:
