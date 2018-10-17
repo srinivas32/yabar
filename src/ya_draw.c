@@ -110,7 +110,7 @@ void ya_create_block(ya_block_t *blk) {
 			blk->bar->occupied_width[A_LEFT] += blk->width + blk->bar->slack;
 			break;
 		case A_CENTER:
-			blk->bar->occupied_width[A_CENTER] += blk->width + blk->bar->slack;
+			blk->bar->occupied_width[A_CENTER] += blk->width;
 			tmpblk = blk->bar->curblk[A_CENTER];
 			if(tmpblk) {
 				for(;tmpblk->prev_blk; tmpblk = tmpblk->prev_blk);
